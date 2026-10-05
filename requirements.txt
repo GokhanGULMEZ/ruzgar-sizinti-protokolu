@@ -1,0 +1,10 @@
+numpy
+pandas
+scipy
+scikit-learn
+joblib
+matplotlib
+catboost
+vmdpy
+tensorflow>=2.12      # CPU yeterli; Colab'da hazır gelir
+shap          # yalnız scripts/09 beeswarm şekilleri için (isteğe bağlı)

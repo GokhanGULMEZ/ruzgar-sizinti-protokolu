@@ -1,0 +1,14 @@
+cff-version: 1.2.0
+message: "Bu yazılımı kullanırsanız lütfen aşağıdaki makaleyi ve bu depoyu atıf yapın."
+title: "Ayrıştırma tabanlı rüzgâr gücü tahmininde zamansal veri sızıntısıyla ilişkili performans farkının ölçülmesi (kod paketi)"
+authors:
+  - family-names: "Gülmez"
+    given-names: "Gökhan"
+    orcid: "https://orcid.org/0009-0008-9485-458X"
+    affiliation: "Tokat Gaziosmanpaşa Üniversitesi"
+  - family-names: "Sarıkaya"
+    given-names: "Kadir"
+    affiliation: "Tokat Gaziosmanpaşa Üniversitesi"
+license: MIT
+repository-code: "[Depo bağlantısı eklenecek]"
+date-released: "2026-10-05"
