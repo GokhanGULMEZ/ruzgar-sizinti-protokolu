@@ -6,13 +6,14 @@ Süre   : HER m için bileşen üretimi ~1 saat (tek çekirdek) + LSTM eğitimi 
 Öneri  : önce  python 17_vmd_ileri_bakis.py 57 1   (en bilgilendirici: 30 dk ileri), sonra  ... 57 2 8.
 Çıktı  : vmd_ileri_T57.csv, vmd_ileri_ozet_T57.csv"""
 from _ortak import *
-import sys
+import sys, os
 from leakage.vmd_ileri import vmd_ileri_egrisi
 
 df = veri_yukle(); out = cikti_klasoru()
 tid = int(sys.argv[1]) if len(sys.argv) > 1 else 57
 ms = tuple(int(a) for a in sys.argv[2:]) or (1, 2, 8)
-d, ozet = vmd_ileri_egrisi(df, tid, ms=ms)
-sfx = '_m' + '-'.join(map(str, ms))
+seeds = tuple(int(a) for a in os.environ.get('RT_SEEDS', '42,43,44').split(','))   # ör. RT_SEEDS=42,43,44,45,46,47,48,49
+d, ozet = vmd_ileri_egrisi(df, tid, ms=ms, seeds=seeds)
+sfx = '_m' + '-'.join(map(str, ms)) + ('' if seeds == (42, 43, 44) else f'_{len(seeds)}tohum')
 d.to_csv(out + f'vmd_ileri_T{tid}{sfx}.csv', index=False); ozet.to_csv(out + f'vmd_ileri_ozet_T{tid}{sfx}.csv', index=False)
 print('\n', ozet.round(2).to_string(index=False)); print('yazıldı:', out)
