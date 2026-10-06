@@ -30,6 +30,10 @@ SEEDS = tuple(int(a) for a in os.environ.get('RT_SEEDS', '42' if SMOKE else '42,
 EPOCHS = 2 if SMOKE else None
 PURGE_SAAT = PURGE * STEP_MIN / 60                  # ana deneydeki boşluk: 12 adım x 30 dk = 6 saat
 ERA5 = ['T2m', 'Sp', 'RelH', 'Wspd_w', 'Wdir_w', 'Tp']
+# Eğitim yalnız 2021'in ilk ~5 ayıdır; test Eylül-Aralık'tır. Yıllık takvim öznitelikleri eğitimde görülmeyen değerlere taşar (ölçek dışı),
+# bu yüzden bu deneyde çıkarılır (iki çözünürlükte de aynı). Saat ve haftanın günü her dönemde görüldüğü için kalır.
+TAKVIM_YIL = ['ay', 'yilin_gunu', 'ay_sin', 'ay_cos']
+FEAT = [f for f in FEATURES if f not in TAKVIM_YIL]
 
 
 def ozellik(d, sph):
@@ -51,6 +55,9 @@ def ozellik(d, sph):
 
 class TD(TurbineData):
     """TurbineData'nın, tarih sınırlarıyla bölünen ve ızgara adımı serbest sürümü (yalnız 2021)."""
+    def sc(self, x):
+        return (x[FEAT].values - self.mn) / self.rng
+
     def __init__(self, df_all, tid, step_min, sinir):
         self.tid = tid
         d = df_all[df_all['TurbID'] == tid].copy()
@@ -73,7 +80,7 @@ class TD(TurbineData):
             self.tr = self.d[self.d.index < sinir['va_bas'] - pur]
             self.va = self.d[(self.d.index >= sinir['va_bas']) & (self.d.index < sinir['te_bas'] - pur)]
             self.te = self.d[self.d.index >= sinir['te_bas']]
-        self.mn = self.tr[FEATURES].min().values; mx = self.tr[FEATURES].max().values
+        self.mn = self.tr[FEAT].min().values; mx = self.tr[FEAT].max().values
         self.rng = np.where(mx - self.mn == 0, 1, mx - self.mn)
         self.x_dec = self.d['Patv'].ffill().fillna(0).values.astype(float); self.N = len(self.x_dec)
 
@@ -92,6 +99,22 @@ def bilesenler(td, out, pencere, roll):
     return Ut
 
 
+def ridge_kontrol(Dk):
+    """Tohumsuz doğrusal kontrol (LSTM eğitim sorunlarını veri/tasarım sorunlarından ayırır). Betik 22'deki Ridge ile aynıdır."""
+    from sklearn.linear_model import Ridge
+    from leakage.config import KAPASITE
+    sonuc = {}
+    for k, D in Dk.items():
+        f = lambda a: D[a]['X'].reshape(len(D[a]['X']), -1)
+        best = None
+        for al in (0.01, 0.1, 1, 10, 100):
+            r = Ridge(alpha=al).fit(f('tr'), D['tr']['y'])
+            e = mae(D['va']['y'], np.clip(r.predict(f('va')), 0, KAPASITE))
+            if best is None or e < best[0]: best = (e, r)
+        sonuc[k] = float(mae(D['te']['y'], np.clip(best[1].predict(f('te')), 0, KAPASITE)))
+    return sonuc
+
+
 def kosu(df, tid, ad, step_min, pencere, L, H, sinir):
     out = OUT + ('smoke_' if SMOKE else '') + f'cozunurluk_{ad}/'; os.makedirs(out, exist_ok=True)
     t0 = time.time(); td = TD(df, tid, step_min, sinir)
@@ -103,17 +126,24 @@ def kosu(df, tid, ad, step_min, pencere, L, H, sinir):
     for k, U in Ut.items():
         D = td.get_xy_ext(L, H, U); assert np.array_equal(D['te']['t'], t_ref), f'test kümesi farklı ({k})'; Dk[k] = D
     print(f'[{ad}] hazırlık {(time.time()-t0)/60:.1f} dk | test örneği: {len(t_ref):,}', flush=True)
+    rg = ridge_kontrol(Dk)
+    print(f'[{ad}] Ridge (tohumsuz) MAE: ' + ' | '.join(f'{k} {v:.1f}' for k, v in rg.items()) + ' | persistence ' +
+          f'{mae(D0["te"]["y"], D0["te"]["yc"]):.1f}', flush=True)
     rows = []
     for sd in SEEDS:
         fn = out + f'sonuc_T{tid}_tohum{sd}.json'
-        if os.path.exists(fn): m = json.load(open(fn))
-        else:
-            m = {'B1': float(mae(D0['te']['y'], D0['te']['yc']))}
-            for k, D in Dk.items(): m[k] = float(mae(D['te']['y'], pred_lstm(fit_lstm(D, L, sd, EPOCHS), D['te']['X'])))
+        m = json.load(open(fn)) if os.path.exists(fn) else {}
+        m.setdefault('B1', float(mae(D0['te']['y'], D0['te']['yc'])))
+        for k, D in Dk.items():                                      # yalnız eksik modeller eğitilir (RT_ROLL=1 ile devam edilebilir)
+            if k in m: continue
+            mod = fit_lstm(D, L, sd, EPOCHS); vl = mod.history.history['val_loss']
+            m[k] = float(mae(D['te']['y'], pred_lstm(mod, D['te']['X'])))
+            print(f'[{ad}]   {k}: {len(vl)} epoch, en iyi doğrulama kaybı {min(vl):.5f} (epoch {int(np.argmin(vl))+1})', flush=True)
             json.dump(m, open(fn, 'w'))
         r = dict(cozunurluk=ad, tohum=sd, **m)
         r['LSI_VMD'] = lsi(m['B7'], m['B6']) if 'B7' in m else np.nan
         r['LSI_LCSF'] = lsi(m['B8'], m['B8L'])
+        r['LSI_LCSF_ridge'] = lsi(rg['B8'], rg['B8L']); r['LSI_VMD_ridge'] = lsi(rg['B7'], rg['B6']) if 'B7' in rg else np.nan
         rows.append(r); print(f'[{ad}] tohum {sd}: ' + ' | '.join(f'{k} {v:.1f}' for k, v in m.items()) +
                               f' | LSI-VMD {r["LSI_VMD"]:.1f} LSI-LCSF {r["LSI_LCSF"]:.1f}', flush=True)
     return rows
