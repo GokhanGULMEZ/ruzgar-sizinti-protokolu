@@ -1,5 +1,5 @@
 """ADIM 25 — ERA5 doğrusal ara değerlemesinin (data.py:34, interpolate(limit=2)) sonuçlara etkisini ÖLÇER. Model eğitilmez (~1-2 dk).
-Soru (hakem bulgusu): interpolate, t anındaki eksik ERA5 değerini t+1 gibi gelecek gözlemlerden doldurabilir. Bu kaç pencereyi etkiliyor?
+Soru: interpolate, t anındaki eksik ERA5 değerini t+1 gibi gelecek gözlemlerden doldurabilir. Bu kaç pencereyi etkiliyor?
 Yöntem: Türbin verisi iki kez kurulur: (A) eski kod (doğrusal ara değerleme) ve (B) güncel kod: yalnız geçmişe bakan ileri doldurma (ffill, aynı limit=2).
 Sonuç (7 Ekim 2026, 6 türbin): ERA5 eksikleri yalnız Patv'nin de eksik olduğu satırlardadır (Nisan 2020 boşluğu); etkilenen eğitim/doğrulama/test penceresi sayısı 0.
         Ardından L=4, H=2 pencereleri eğitim/doğrulama/test için karşılaştırılır: kaç pencerenin girdisi iki sürümde farklı?

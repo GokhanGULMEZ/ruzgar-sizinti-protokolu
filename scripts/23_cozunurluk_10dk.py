@@ -1,4 +1,4 @@
-"""ADIM 23 — Çözünürlük duyarlılığı: 30 dakikalık ortak ızgara yerine yerel 10 dakikalık ızgara (hakem isteği; Bölüm 7 sınırlılık #3).
+"""ADIM 23 — Çözünürlük duyarlılığı: 30 dakikalık ortak ızgara yerine yerel 10 dakikalık ızgara (Bölüm 7 sınırlılık #3).
 Neden yalnız 2021: ham veri 2020'de 15 dk, 2021'de 10 dk aralıklıdır; 10 dakikalık çözünürlük yalnız 2021'de mümkündür.
 Tasarım (çözünürlük etkisini veri uzunluğundan ve pencereden ayırmak için İKİ koşul aynı kodla çalıştırılır):
   '30dk' : 2021 verisi, 30 dk ızgara (:10 ve :40 anları), kayan VMD penceresi 224 adım  (= 4,67 gün)

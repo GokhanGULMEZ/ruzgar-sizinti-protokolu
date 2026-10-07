@@ -1,4 +1,4 @@
-"""ADIM 13 — Makaledeki sayıların ham sonuç dosyalarından yeniden hesaplanıp denetlenmesi (hakem sorusu: "LSI değerleri
+"""ADIM 13 — Makaledeki sayıların ham sonuç dosyalarından yeniden hesaplanıp denetlenmesi (soru: "LSI değerleri
 hangi ham MAE çiftlerinden üretildi?").
 Kullanım:  python 13_tablo_tutarlilik.py            (RT_OUT içindeki adim6_T*.pkl, seed_T*.pkl ve duyarlilik_*.csv okunur)
 Denetler  : (1) Tablo 4/5: altı türbin, 1 saat, tohum 42 — MAE ve LSI makale değerleriyle aynı mı;

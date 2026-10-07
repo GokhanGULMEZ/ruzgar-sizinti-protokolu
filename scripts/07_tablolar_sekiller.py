@@ -25,7 +25,7 @@ for tid, res in sets.items():
     rows.append(r)
 tab = pd.DataFrame(rows); tab.to_csv(OUT + 'tablo_turbinler_1sa.csv', index=False); print(tab.to_string(index=False))
 
-# --- Tablo: TÜM ölçütler (hakem isteği: RMSE, nMAE, nRMSE, R2, Skill) — her türbin, ufuk ve model için ---
+# --- Tablo: TÜM ölçütler (RMSE, nMAE, nRMSE, R2, Skill) — her türbin, ufuk ve model için ---
 AD_ALL = {'B1': 'Persistence', 'B2': 'Ham LSTM', 'B3': 'CatBoost Direct', 'B6': 'Tam seri VMD-LSTM (sızdıran)',
           'B7': 'Kayan VMD-LSTM (nedensel)', 'B8': 'LCSF-LSTM (nedensel)', 'B8L': 'LCSF iki yönlü (sızdıran)',
           'B9': 'B9 LCSF+OOF CatBoost', 'B8I': 'B8I (eğitim-içi artık)', 'B2O': 'B2O (Ham LSTM+OOF)'}

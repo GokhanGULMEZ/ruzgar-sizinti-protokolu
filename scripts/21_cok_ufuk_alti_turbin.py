@@ -1,4 +1,4 @@
-"""ADIM 21 — Çok ufuklu analizin diğer beş türbine genişletilmesi (hakem isteği: RQ2 yalnız Türbin 57'de).
+"""ADIM 21 — Çok ufuklu analizin diğer beş türbine genişletilmesi (RQ2 başlangıçta yalnız Türbin 57'de).
 Ufuklar: 3 saat (H=6) ve 6 saat (H=12). Modeller: B1 Persistence, B2 Ham LSTM, B3 CatBoost Direct, B6/B7 (tam seri / kayan VMD),
 B8/B8L (nedensel / iki yönlü LCSF). B9 ve ablasyonlar BU adımda yoktur (maliyet).
 Önkoşul: 02_turbin_kosusu.py {tid} ile üretilmiş vmd_full_T{tid}.npy ve vmd_roll_T{tid}.npy (ana Drive hesabında var; yoksa

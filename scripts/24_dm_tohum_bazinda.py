@@ -1,4 +1,4 @@
-"""ADIM 24 — Diebold–Mariano (+HLN, Holm) testinin TOHUM BAZINDA raporlanması (hakem isteği: anlamlılık tohum seçimine bağlı mı?).
+"""ADIM 24 — Diebold–Mariano (+HLN, Holm) testinin TOHUM BAZINDA raporlanması (soru: anlamlılık tohum seçimine bağlı mı?).
 Girdi : adim6_T{tid}.pkl (tohum 42), seed_T{tid}.pkl (43, 44), seed_ek_T{tid}.pkl (45–49), OUT klasöründe. Model EĞİTİLMEZ (~1 dakika).
 Kullanım: python 24_dm_tohum_bazinda.py            (6 türbin: 57 10 83 120 61 84)
           python 24_dm_tohum_bazinda.py 57 10      (seçili türbinler)

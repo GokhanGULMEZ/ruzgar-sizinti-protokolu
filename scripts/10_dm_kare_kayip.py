@@ -1,4 +1,4 @@
-"""ADIM 10 — Diebold–Mariano testinin KARE KAYIPLA tekrarı (hakem isteği: MAE'ye bağımlı olmayan sağlamlık).
+"""ADIM 10 — Diebold–Mariano testinin KARE KAYIPLA tekrarı (MAE'ye bağımlı olmayan sağlamlık kontrolü).
 Girdi : adim2_T57_tahminler.pkl (OUT klasöründe; model eğitilmez, ~1 dakika).
 Çıktı : dm_kare_kayip_T57.csv (30 karşılaştırma, Holm 30 üzerinde; mutlak ve kare kayıp yan yana)
         dm_persistence_T57.csv (nedensel modeller vs persistence; her iki kayıp; Holm kendi ailesinde)

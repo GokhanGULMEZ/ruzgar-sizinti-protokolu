@@ -1,4 +1,4 @@
-"""Duyarlılık analizleri (hakem isteği). Şimdilik: uzun eksik veri boşluklarının (ör. Nisan 2020) ileri doldurulmasının
+"""Duyarlılık analizleri: uzun eksik veri boşluklarının (ör. Nisan 2020) ileri doldurulmasının
 LCSF tabanlı sızıntı ölçümüne (LSI) etkisi.
 
 Uzun boşluk: Patv'nin art arda > UZUN_ADIM (varsayılan 48 = 24 saat) eksik olduğu bölüm.

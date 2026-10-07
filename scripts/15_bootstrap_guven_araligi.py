@@ -1,4 +1,4 @@
-"""ADIM 15 — LSI için hareketli blok bootstrap güven aralığı (hakem isteği: yalnız std yetersiz).
+"""ADIM 15 — LSI için hareketli blok bootstrap güven aralığı (yalnız standart sapma yeterli değildir).
 Kullanım:  python 15_bootstrap_guven_araligi.py            (altı türbin, 1 saat, tohum 42; adim6_T*.pkl okunur; <1 dk)
            python 15_bootstrap_guven_araligi.py 24 48 96 192   (blok uzunluğu duyarlılığı; çıktı lsi_bootstrap_blok_duyarlilik.csv)
 Yöntem : Test noktaları ARDIŞIK bloklar halinde (varsayılan 96 adım = 2 gün) yeniden örneklenir; AYNI indeksler sızdıran ve nedensel

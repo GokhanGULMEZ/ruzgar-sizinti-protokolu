@@ -112,7 +112,7 @@ Paket, makale sonuçlarını üreten Colab defterlerinden (`notebooks/orijinal_d
 
 ## Lisans / atıf
 
-Kod MIT lisansı altındadır (`LICENSE`). Atıf için `CITATION.cff` dosyasına bakınız; makale yayımlanınca Zenodo DOI eklenecektir.
+Kod MIT lisansı altındadır (`LICENSE`). Atıf için `CITATION.cff` dosyasına bakınız; Zenodo DOI makale yayımlandığında eklenecektir.
 
 
 ## Nisan 2020 boşluğu duyarlılık sonucu
