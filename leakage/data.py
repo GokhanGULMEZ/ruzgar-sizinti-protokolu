@@ -31,7 +31,9 @@ def add_features(d):
     """37 özniteliği üret. Gecikmeler ve kayan ortalamalar yalnız geçmişe bakar (shift)."""
     d = d.copy()
     era5 = ['T2m', 'Sp', 'RelH', 'Wspd_w', 'Wdir_w', 'Tp']
-    d[era5] = d[era5].interpolate(method='linear', limit=2)
+    # ERA5 eksikleri yalnız GEÇMİŞE bakan ileri doldurmayla (en çok 2 adım) doldurulur. (İlk sürümde doğrusal ara değerleme vardı,
+    # t+1 gibi gelecek komşudan değer üretebilirdi; scripts/25 ile ölçüldü: hiçbir eğitim/doğrulama/test penceresinin girdisi değişmedi.)
+    d[era5] = d[era5].ffill(limit=2)
     d['is_missing'] = d['Patv'].isna().astype(int)
     d['Patv'] = d['Patv'].clip(lower=0)
     idx = d.index

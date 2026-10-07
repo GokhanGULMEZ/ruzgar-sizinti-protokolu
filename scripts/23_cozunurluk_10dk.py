@@ -39,7 +39,7 @@ FEAT = [f for f in FEATURES if f not in TAKVIM_YIL]
 def ozellik(d, sph):
     """data.add_features'ın saatte `sph` adımlık ızgara için genellemesi (gecikmeler ve kayan ortalamalar yalnız geçmişe bakar)."""
     d = d.copy()
-    d[ERA5] = d[ERA5].interpolate(method='linear', limit=sph)          # 30 dk'da limit=2 (1 saat) ile aynı fiziksel süre
+    d[ERA5] = d[ERA5].ffill(limit=sph)          # yalnız geçmişe bakan doldurma; 30 dk'da limit=2 (1 saat) ile aynı fiziksel süre (bkz. data.py)
     d['is_missing'] = d['Patv'].isna().astype(int); d['Patv'] = d['Patv'].clip(lower=0)
     idx = d.index
     d['saat'] = idx.hour; d['haftanin_gunu'] = idx.dayofweek; d['ay'] = idx.month; d['yilin_gunu'] = idx.dayofyear
