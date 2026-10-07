@@ -36,7 +36,7 @@ pip install -r requirements.txt
 ```
 Test edilen sürümler: Python 3.11 (sentetik testler; numpy 2.4, pandas 3.0, scipy 1.17, catboost 1.2, tensorflow 2.21 CPU) ve Colab Python 3.13 (gerçek veri, T10 eşleşmesi).
 Colab'da `catboost` ve `vmdpy` dışındakiler hazır gelir. Makale sonuçlarını üreten sürümleri sabitlemek için
-Colab'da `!pip freeze > requirements_kilit.txt` alıp depoya ekleyin (henüz yapılmadı).
+Colab'da `!pip freeze > requirements_kilit.txt` alıp depoya ekleyin .
 
 ## Veri
 
@@ -74,6 +74,12 @@ export RT_OUT=/yol/sonuclar/          # önbellek ve çıktılar; sonunda / olsu
 | 17 | `python scripts/17_vmd_ileri_bakis.py 57 1 2 8` | ~1 sa her m için (kayan VMD ön hesabı) + LSTM | `vmd_ileri_T57_m*.csv`, `vmd_ileri_ozet_T57_m*.csv` (kayan VMD için ileri-bakış doz–tepki: VMD sınır etkisini gelecek bilgisinden ayırma) |
 | 18 | `python scripts/18_ek_tohumlar.py 57` | ~1,5–2 sa (≈20 LSTM) | `seed_ek_T57.pkl` + ekranda 8 tohumluk LSI özeti (ort., std, min–maks, %95 aralık) |
 | 19 | `python scripts/19_vmd_geri_kontrol.py 57 1 2 4` | ~1,5 sa (kayan VMD ön hesabı + 15 LSTM) | `vmd_geri_T57.csv`, `vmd_geri_ozet_T57.csv` (geriye kaydırılmış nedensel bileşen: VMD sınır etkisi kontrolü) |
+| 20 | `python scripts/20_vmd_uc_nokta_tani.py 57` | ~1 sa | kayan VMD için üç noktalı ileri-bakış tanısı |
+| 21 | `python scripts/21_cok_ufuk_alti_turbin.py` | birkaç saat | diğer beş türbinde 3 ve 6 saatlik ufuk (tek tohum) |
+| 22 | `python scripts/22_vmd_dogrusal_tani.py 57` | dakikalar | tohumsuz Ridge tanısı |
+| 23 | `RT_ROLL=1 python scripts/23_cozunurluk_10dk.py 57` | birkaç saat (kayan VMD önbellekli) | 30 dk ve yerel 10 dk ızgara karşılaştırması |
+| 24 | `python scripts/24_dm_tohum_bazinda.py` | ~1 sa (model eğitilmez) | `dm_tohum_bazinda.csv`, `dm_tohum_ozet.csv` (6 türbin x 8 tohum DM+HLN+Holm) |
+| 25 | `python scripts/25_era5_interpolasyon_kontrol.py [10dk]` | dakikalar | ERA5 doldurma yönteminin etkisi (yalnız ölçüm) |
 | 26 | `python scripts/26_mimari_duyarlilik.py gru 57` ve `... tcn 57` | ~1–3 sa her mimari (15 eğitim) | `mimari_gru_T57.pkl`, `mimari_tcn_T57.pkl` + ekranda LSI ve DM özeti (aynı protokol GRU / nedensel TCN ile) |
 
 Rolling VMD en pahalı adımdır (tek türbinde 35 bin VMD çağrısı); bloklar `RT_OUT` içine önbelleklenir ve
@@ -97,16 +103,17 @@ Paket, makale sonuçlarını üreten Colab defterlerinden (`notebooks/orijinal_d
 - Türbin seçimi: ham Patv eksik oranına göre en düşük, %25, %50, %75, en yüksek + T57 → T10, T57, T61, T83, T84, T120.
 - Anma gücü 1500 kW (SL1500/82); en yüksek Patv T57/61/84/120'de ≈1521, T10/83'te ≈1561 kW (kırpılmadı).
 
-## Bilinen sınırlar (makalede de belirtilmeli)
+## Bilinen sınırlar
 
-- Tek veri seti (SDWPF), tek rüzgâr çiftliği. İkinci açık veri seti planlanıyor.
-- DM testleri eğitim tohumu varyansını içermez; bu yüzden 5 türbinde 3 tohum tekrarı yapılmıştır. T57'de tohum tekrarı yoktur.
-- Maliyet ölçümü makineye bağlıdır (Python, tek çekirdek); makalede donanım belirtilmelidir.
+- Tek veri seti (SDWPF), tek rüzgâr çiftliği; test dönemi 13 Eylül–31 Aralık 2021 (sonbahar–kış).
+- Ana deneylerde tek LSTM mimarisi; GRU ve nedensel TCN ile küçük bir tekrar için `scripts/26_mimari_duyarlilik.py`.
+- Tohum tekrarı (42–49) yalnızca 1 saatlik ufukta ve LSTM tabanlı modellerde yapılmıştır; 3 ve 6 saatlik ufuklar altı türbinde tek tohumludur.
+- Maliyet ölçümü makineye bağlıdır (Python, tek çekirdek); donanım makalede belirtilmiştir.
 - Nedensel modellerin hata farkları tohum gürültüsü içinde ayırt edilemez; bu bir bulgu olarak raporlanır, "yeni en iyi model" iddiası yoktur.
 
 ## Lisans / atıf
 
-Lisans seçimi bekliyor (öneri: MIT). Makale yayımlanınca Zenodo DOI ve `CITATION.cff` eklenecek.
+Kod MIT lisansı altındadır (`LICENSE`). Atıf için `CITATION.cff` dosyasına bakınız; makale yayımlanınca Zenodo DOI eklenecektir.
 
 
 ## Nisan 2020 boşluğu duyarlılık sonucu
