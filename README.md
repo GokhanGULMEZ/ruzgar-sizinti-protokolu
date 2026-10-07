@@ -80,6 +80,7 @@ export RT_OUT=/yol/sonuclar/          # önbellek ve çıktılar; sonunda / olsu
 | 24 | `python scripts/24_dm_tohum_bazinda.py` | ~1 sa (model eğitilmez) | `dm_tohum_bazinda.csv`, `dm_tohum_ozet.csv` (6 türbin x 8 tohum DM+HLN+Holm) |
 | 25 | `python scripts/25_era5_interpolasyon_kontrol.py [10dk]` | dakikalar | ERA5 doldurma yönteminin etkisi (yalnız ölçüm) |
 | 26 | `python scripts/26_mimari_duyarlilik.py gru 57` ve `... tcn 57` | ~1–3 sa her mimari (15 eğitim) | `mimari_gru_T57.pkl`, `mimari_tcn_T57.pkl` + ekranda LSI ve DM özeti (aynı protokol GRU / nedensel TCN ile) |
+| 27 | `python scripts/27_kayip_duyarlilik.py mae 57` (veya `huber 57`) | ~30–60 dk (15 eğitim) | `kayip_mae_T57.pkl` + ekranda MAE, LSI ve DM özeti (aynı LSTM, MSE yerine MAE kaybıyla) |
 
 Rolling VMD en pahalı adımdır (tek türbinde 35 bin VMD çağrısı); bloklar `RT_OUT` içine önbelleklenir ve
 yarıda kalırsa aynı komut kaldığı yerden devam eder. Colab için hazır defter: `notebooks/Colab_calistir.ipynb`.
