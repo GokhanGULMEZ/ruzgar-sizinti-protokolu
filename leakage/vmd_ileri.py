@@ -10,7 +10,7 @@ import numpy as np, pandas as pd
 from joblib import Parallel, delayed
 from .config import W, K, OUT, L_BEST
 from .data import TurbineData
-from .decomposition import vmd_sorted
+from .decomposition import vmd_sorted, blok_temizle
 from .models import fit_lstm, pred_lstm
 from .evaluation import mae, lsi
 from .pipeline import build_components
@@ -33,7 +33,7 @@ def vmd_ileri_bilesen(x_dec, tag, m, out_dir=OUT, window=W, block=2000, n_jobs=-
         if os.path.exists(fn): U[s:e] = np.load(fn); continue
         t0 = time.time()
         res = Parallel(n_jobs=n_jobs)(delayed(_mod_t)(x_dec, t, m, window) for t in range(s, e))
-        blk = np.nan_to_num(np.array(res)); np.save(fn, blk); U[s:e] = blk
+        blk = blok_temizle(res); np.save(fn, blk); U[s:e] = blk
         print(f'   VMD ileri m={m} {tag}: {e}/{N} | {time.time()-t0:.0f} sn', flush=True)
     np.save(fn_all, U); return U
 

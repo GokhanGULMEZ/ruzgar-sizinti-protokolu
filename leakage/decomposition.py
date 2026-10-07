@@ -13,6 +13,16 @@ from joblib import Parallel, delayed
 from .config import ALPHA, TAU, K, DC, INIT, TOL, W, BUTTER_ORDER, OUT
 
 
+def blok_temizle(res):
+    """Blok sonuçlarını diziye çevirir; NaN varsa sıfırlar ve uyarı verir (sessiz yutmaz)."""
+    a = np.array(res)
+    n = int(np.isnan(a).sum())
+    if n:
+        import warnings
+        warnings.warn(f'VMD bloğunda {n} NaN değer 0 ile değiştirildi.')
+    return np.nan_to_num(a)
+
+
 def vmd_sorted(sig):
     """VMD; modlar merkez frekansına göre (düşükten yükseğe) sıralı döner: şekil (K, len)."""
     u, _, om = VMD(sig, ALPHA, TAU, K, DC, INIT, TOL)
@@ -47,7 +57,7 @@ def rolling_vmd(x_dec, tag, out_dir=OUT, window=W, block=2000, n_jobs=-1):
             U[s:e] = np.load(fn); continue
         t0 = time.time()
         res = Parallel(n_jobs=n_jobs)(delayed(last_mode)(x_dec[t - window + 1:t + 1]) for t in range(s, e))
-        blk = np.nan_to_num(np.array(res)); np.save(fn, blk); U[s:e] = blk
+        blk = blok_temizle(res); np.save(fn, blk); U[s:e] = blk
         print(f'   rolling VMD {tag}: {e}/{N} | {time.time()-t0:.0f} sn')
     np.save(fn_all, U)
     return U
