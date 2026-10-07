@@ -74,7 +74,7 @@ export RT_OUT=/yol/sonuclar/          # önbellek ve çıktılar; sonunda / olsu
 | 17 | `python scripts/17_vmd_ileri_bakis.py 57 1 2 8` | ~1 sa her m için (kayan VMD ön hesabı) + LSTM | `vmd_ileri_T57_m*.csv`, `vmd_ileri_ozet_T57_m*.csv` (kayan VMD için ileri-bakış doz–tepki: VMD sınır etkisini gelecek bilgisinden ayırma) |
 | 18 | `python scripts/18_ek_tohumlar.py 57` | ~1,5–2 sa (≈20 LSTM) | `seed_ek_T57.pkl` + ekranda 8 tohumluk LSI özeti (ort., std, min–maks, %95 aralık) |
 | 19 | `python scripts/19_vmd_geri_kontrol.py 57 1 2 4` | ~1,5 sa (kayan VMD ön hesabı + 15 LSTM) | `vmd_geri_T57.csv`, `vmd_geri_ozet_T57.csv` (geriye kaydırılmış nedensel bileşen: VMD sınır etkisi kontrolü) |
-| 20 | `python scripts/20_vmd_uc_nokta_tani.py 57` | ~1 sa | kayan VMD için üç noktalı ileri-bakış tanısı |
+| 20 | `python scripts/20_vmd_uc_nokta_tani.py` | birkaç dk (LSTM eğitilmez) | VMD ileri-bakış eğrisinin monoton olmayışı için hızlı tanı (17. adım bileşenleri gerekir) |
 | 21 | `python scripts/21_cok_ufuk_alti_turbin.py` | birkaç saat | diğer beş türbinde 3 ve 6 saatlik ufuk (tek tohum) |
 | 22 | `python scripts/22_vmd_dogrusal_tani.py 57` | dakikalar | tohumsuz Ridge tanısı |
 | 23 | `RT_ROLL=1 python scripts/23_cozunurluk_10dk.py 57` | birkaç saat (kayan VMD önbellekli) | 30 dk ve yerel 10 dk ızgara karşılaştırması |
