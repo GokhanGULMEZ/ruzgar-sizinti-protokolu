@@ -74,6 +74,7 @@ export RT_OUT=/yol/sonuclar/          # önbellek ve çıktılar; sonunda / olsu
 | 17 | `python scripts/17_vmd_ileri_bakis.py 57 1 2 8` | ~1 sa her m için (kayan VMD ön hesabı) + LSTM | `vmd_ileri_T57_m*.csv`, `vmd_ileri_ozet_T57_m*.csv` (kayan VMD için ileri-bakış doz–tepki: VMD sınır etkisini gelecek bilgisinden ayırma) |
 | 18 | `python scripts/18_ek_tohumlar.py 57` | ~1,5–2 sa (≈20 LSTM) | `seed_ek_T57.pkl` + ekranda 8 tohumluk LSI özeti (ort., std, min–maks, %95 aralık) |
 | 19 | `python scripts/19_vmd_geri_kontrol.py 57 1 2 4` | ~1,5 sa (kayan VMD ön hesabı + 15 LSTM) | `vmd_geri_T57.csv`, `vmd_geri_ozet_T57.csv` (geriye kaydırılmış nedensel bileşen: VMD sınır etkisi kontrolü) |
+| 26 | `python scripts/26_mimari_duyarlilik.py gru 57` ve `... tcn 57` | ~1–3 sa her mimari (15 eğitim) | `mimari_gru_T57.pkl`, `mimari_tcn_T57.pkl` + ekranda LSI ve DM özeti (aynı protokol GRU / nedensel TCN ile) |
 
 Rolling VMD en pahalı adımdır (tek türbinde 35 bin VMD çağrısı); bloklar `RT_OUT` içine önbelleklenir ve
 yarıda kalırsa aynı komut kaldığı yerden devam eder. Colab için hazır defter: `notebooks/Colab_calistir.ipynb`.

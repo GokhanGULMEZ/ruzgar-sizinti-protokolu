@@ -22,12 +22,41 @@ def build_lstm(L, F):
     return m
 
 
-def fit_arrays(Xt, yt, Xv, yv, L, seed=SEED, epochs=None):
-    """Dizilerle LSTM eğit. Hedef seviye: y/KAPASITE. Erken durdurma doğrulamada (patience=5)."""
+def build_gru(L, F):
+    """GRU karşılığı: LSTM ile AYNI yapı (64 -> 32), dropout, Adam, MSE; yalnız hücre türü farklı."""
+    tf = _tf()
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import GRU, Dense, Dropout, Input
+    m = Sequential([Input(shape=(L, F)),
+                    GRU(LSTM_UNITS[0], return_sequences=True), Dropout(LSTM_DROPOUT),
+                    GRU(LSTM_UNITS[1]), Dropout(LSTM_DROPOUT), Dense(1)])
+    m.compile(optimizer=tf.keras.optimizers.Adam(LSTM_LR), loss='mse')
+    return m
+
+
+def build_tcn(L, F):
+    """Nedensel (causal) genişletilmiş evrişim ağı (TCN tarzı): Conv1D(64, k=2, d=1) -> Conv1D(32, k=2, d=2),
+    dropout, son zaman adımı -> Dense(1). Alıcı alan L=4 adımı kapsar. Eğitim ayarları LSTM ile aynıdır."""
+    tf = _tf()
+    from tensorflow.keras.models import Sequential
+    from tensorflow.keras.layers import Conv1D, Dense, Dropout, Input, Cropping1D, Flatten
+    m = Sequential([Input(shape=(L, F)),
+                    Conv1D(LSTM_UNITS[0], 2, padding='causal', dilation_rate=1, activation='relu'), Dropout(LSTM_DROPOUT),
+                    Conv1D(LSTM_UNITS[1], 2, padding='causal', dilation_rate=2, activation='relu'), Dropout(LSTM_DROPOUT),
+                    Cropping1D((L - 1, 0)), Flatten(), Dense(1)])
+    m.compile(optimizer=tf.keras.optimizers.Adam(LSTM_LR), loss='mse')
+    return m
+
+
+_ARCH = {'lstm': build_lstm, 'gru': build_gru, 'tcn': build_tcn}
+
+
+def fit_arrays(Xt, yt, Xv, yv, L, seed=SEED, epochs=None, arch='lstm'):
+    """Dizilerle sinir ağı eğit (varsayılan LSTM; arch='gru'|'tcn' ek mimariler). Hedef seviye: y/KAPASITE. Erken durdurma doğrulamada (patience=5)."""
     tf = _tf()
     from tensorflow.keras.callbacks import EarlyStopping
     tf.keras.utils.set_random_seed(seed)
-    m = build_lstm(L, Xt.shape[2])
+    m = _ARCH[arch](L, Xt.shape[2])
     m.fit(Xt, yt / KAPASITE, validation_data=(Xv, yv / KAPASITE),
           epochs=epochs or LSTM_EPOCHS, batch_size=LSTM_BATCH, verbose=0,
           callbacks=[EarlyStopping(patience=LSTM_PATIENCE, restore_best_weights=True)])
