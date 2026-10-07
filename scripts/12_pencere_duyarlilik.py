@@ -1,4 +1,4 @@
-"""ADIM 12 — Rolling VMD pencere uzunluğu duyarlılığı : 7 / 14 / 28 gün.
+"""ADIM 12 — Rolling VMD pencere uzunluğu duyarlılığı: 7 / 14 / 28 gün.
 Kullanım:  python 12_pencere_duyarlilik.py 57            (varsayılan 57; tohum 42; 1 saat ufku)
            python 12_pencere_duyarlilik.py 57 336        (yalnız tek pencere; gece bölerek çalıştırmak için)
 Süre   : Rolling VMD ön hesabı pencereyle orantılı: 336 -> ~30 dk, 1344 -> ~2 sa (Colab, 2 çekirdek); 672 mevcut önbellekten.

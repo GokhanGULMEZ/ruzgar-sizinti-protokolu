@@ -1,4 +1,4 @@
-"""ADIM 11 — Nisan 2020 boşluğunun ileri doldurulmasına duyarlılık . Yalnız LCSF (Rolling/Full VMD yeniden hesaplanmaz).
+"""ADIM 11 — Nisan 2020 boşluğunun ileri doldurulmasına duyarlılık. Yalnız LCSF (Rolling/Full VMD yeniden hesaplanmaz).
 Kullanım:  python 11_nisan2020_duyarlilik.py 57        (varsayılan 57; 3 tohum: 42, 43, 44)
 Süre   : 3 yöntem x 3 tohum x 2 LSTM = 18 LSTM, Colab'da yaklaşık 30-45 dk.
 Çıktı  : duyarlilik_nisan2020_T{tid}.csv (tohum başına), duyarlilik_nisan2020_ozet_T{tid}.csv (ortalama ± std)
