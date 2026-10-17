@@ -20,6 +20,17 @@ def lsi(e_causal, e_leaky):
     return 100 * (e_causal - e_leaky) / e_causal
 
 
+def lambda_orani(e_nedensel, e_sizdiran, e_oracle):
+    """Oracle-normalize sızıntı oranı: lambda = (E_nedensel - E_sızdıran) / (E_nedensel - E_oracle).
+    Payda <= 0 ise tanımsızdır (NaN). lambda [0,1] dışına çıkabilir (oracle sızdırandan kötüyse > 1):
+    aralık garanti değildir, sonuç mutlak değerlerle birlikte raporlanmalıdır. Döner: (lambda, uyarı metni veya '')."""
+    pay = e_nedensel - e_sizdiran; payda = e_nedensel - e_oracle
+    if payda <= 0:
+        return float('nan'), 'payda <= 0: oracle nedenselden iyi değil, lambda tanımsız'
+    lam = pay / payda
+    return float(lam), ('' if 0 <= lam <= 1 else 'lambda [0,1] dışında (oracle sızdırandan kötü veya sızdıran nedenselden kötü)')
+
+
 def dm_test(y, p1, p2, h=1, loss='abs'):
     """Diebold-Mariano testi + Harvey-Leybourne-Newbold (1997) küçük örneklem düzeltmesi.
     DM < 0: ilk model (p1) daha iyi. h: tahmin ufku (adım) -> Newey-West benzeri uzun dönem varyans."""

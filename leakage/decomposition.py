@@ -7,7 +7,7 @@
 """
 import os, time
 import numpy as np
-from scipy.signal import butter, lfilter, lfilter_zi, filtfilt
+from scipy.signal import butter, lfilter, lfilter_zi, filtfilt, sosfilt, sosfilt_zi, sosfiltfilt
 from vmdpy import VMD
 from joblib import Parallel, delayed
 from .config import ALPHA, TAU, K, DC, INIT, TOL, W, BUTTER_ORDER, OUT
@@ -75,16 +75,27 @@ class LCSF:
         self.fc = np.clip(np.sort(om[-1]), 1e-4, 0.49)          # döngü/adım
         edges = np.sqrt(self.fc[:-1] * self.fc[1:])               # K-1 sınır (geometrik orta)
         self.edges = edges
-        self.bands = []
+        self.bands = []; self.sos = []
         for k in range(K):
             if k == 0:       ba = butter(BUTTER_ORDER, edges[0], 'low', fs=1.0)
             elif k == K - 1: ba = butter(BUTTER_ORDER, edges[K - 2], 'high', fs=1.0)
             else:            ba = butter(BUTTER_ORDER, [edges[k - 1], edges[k]], 'band', fs=1.0)
             self.bands.append(ba)
+            self.sos.append(butter(BUTTER_ORDER, edges[0] if k == 0 else edges[K - 2] if k == K - 1 else [edges[k - 1], edges[k]],
+                                   'low' if k == 0 else 'high' if k == K - 1 else 'band', fs=1.0, output='sos'))
         return self
 
-    def transform(self, x, causal=True):
+    def transform(self, x, causal=True, sos=False):
+        """sos=False: (b,a) biçimi (makaledeki sonuçların üretildiği varsayılan). sos=True: ikinci dereceden kesitler
+        (sayısal olarak daha kararlı; scripts/30 iki biçimin çıktısını karşılaştırır)."""
         out = np.zeros((len(x), K))
+        if sos:
+            for k, s_ in enumerate(self.sos):
+                if causal:
+                    out[:, k] = sosfilt(s_, x, zi=sosfilt_zi(s_) * x[0])[0]
+                else:
+                    out[:, k] = sosfiltfilt(s_, x)
+            return out
         for k, (b, a) in enumerate(self.bands):
             if causal:
                 zi = lfilter_zi(b, a) * x[0]                      # başlangıç durumu yalnız ilk örnekten

@@ -14,7 +14,7 @@ L_BEST = 4                     # doğrulamada seçilen: 2 saat (01_L_secimi.py i
 PURGE = 12                     # bölmeler arası boşluk (adım) = 6 saat
 SPLIT = (0.70, 0.15, 0.15)     # kronolojik eğitim/doğrulama/test
 SEED = 42                      # ana tohum
-SEEDS_EK = (43, 44)            # tekrar tohumları (03_seed_tekrar.py)
+SEEDS_EK = (43, 44)            # 3 tohumlu tekrarın ek tohumları (03). Sekiz tohum = 42 + SEEDS_EK + (45..49) [18 ve 24. betikler]
 
 # --- Ayrıştırma (Bölüm 4.2-4.4) ---------------------------------------------
 ALPHA, TAU, K, DC, INIT, TOL = 2000, 0.0, 4, 0, 1, 1e-7   # VMD

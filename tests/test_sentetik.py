@@ -57,6 +57,42 @@ def test_istatistik():
     assert m['MAE'] == 0 and m['Skill'] == 100
 
 
+def test_lambda_ve_referans():
+    from leakage.evaluation import lambda_orani
+    from leakage.reference_models import nielsen_a, referans_hatalari
+    lam, uyari = lambda_orani(115.94, 61.73, 11.05)
+    assert abs(lam - 0.5168) < 1e-3 and uyari == ''                                           # makale tablosu (LCSF, T57)
+    lam, _ = lambda_orani(116.78, 68.66, 64.64); assert abs(lam - 0.9228) < 1e-3
+    l2, u2 = lambda_orani(100., 50., 60.); assert l2 > 1 and u2 != ''                          # oracle sızdırandan kötü -> aralık dışı uyarısı
+    l3, u3 = lambda_orani(100., 50., 110.); assert np.isnan(l3) and u3 != ''                   # payda <= 0 -> tanımsız
+    rng = np.random.default_rng(3); n = 20000; e = rng.normal(size=n); p = np.zeros(n)
+    for t in range(1, n): p[t] = 0.9 * p[t - 1] + e[t]                                         # AR(1): a_k = 0.9^k
+    assert abs(nielsen_a(p, 1) - 0.9) < 0.02 and abs(nielsen_a(p, 4) - 0.9 ** 4) < 0.03 and nielsen_a(p, 0) == 1.0
+    k = 6; r = referans_hatalari(p[:15000], p[15000 + k:], p[15000:-k], k)
+    assert r['nielsen'][1] <= r['persistence'][1] and r['nielsen'][1] <= r['iklimsel'][1] + 1e-9   # MSE-eniyi: ikisinden de kötü olamaz
+    q = p.copy(); q[100] = np.nan; assert np.isfinite(nielsen_a(q, 2))                         # NaN çiftleri atlanır
+
+
+def test_sertifika():
+    from leakage.certificate import Operator, pertürbasyon_profili, erisim, onek_degismezligi
+    td = TurbineData(df, 1); x = td.x_dec; N = td.N
+    lc = LCSF().fit(x[:len(td.tr)]); w = 96
+    nedensel = Operator('lcsf', at=lambda s, t: lc.transform(s, True)[t])
+    sizdiran = Operator('lcsf-L', at=lambda s, t: lc.transform(s, False)[t])
+    kayan = Operator('kayan', at=lambda s, t: last_mode(s[t - w + 1:t + 1]))
+    from leakage.decomposition import full_vmd
+    tam = Operator('tam', full=lambda s: full_vmd(s, len(s)))
+    taular = [0, 1, 4, 16]; t0 = [N // 2, N // 2 + 500]
+    S = pertürbasyon_profili(nedensel, x, t0, [100, 200], taular); assert (S == 0).all() and erisim(S[0], taular) == -1
+    S = pertürbasyon_profili(sizdiran, x, t0, [200], taular); assert S[0, 0] > 1e-3 and erisim(S[0], taular) >= 0
+    S = pertürbasyon_profili(kayan, x, [N // 2], [200], taular); assert (S == 0).all()
+    S = pertürbasyon_profili(tam, x, [N // 2], [200], [0, 4]); assert S[0, 0] > 1e-3
+    kes = [(N // 3) | 1, (N // 2) | 1, (2 * N // 3) | 1]                                      # tek t: önek uzunluğu çift (vmdpy tek uzunlukta son örneği keser)
+    assert onek_degismezligi(nedensel, x, kes)[1] == 0 and onek_degismezligi(kayan, x, kes)[1] == 0
+    assert onek_degismezligi(sizdiran, x, kes)[1] > 0                                          # çift yönlü: önek değişmez DEĞİL
+    assert onek_degismezligi(tam, x, kes[:1])[1] == 1                                          # tam seri VMD: önek değişmez DEĞİL
+
+
 def test_uctan_uca():
     from leakage.pipeline import run_turbine, ozet
     with tempfile.TemporaryDirectory() as out:

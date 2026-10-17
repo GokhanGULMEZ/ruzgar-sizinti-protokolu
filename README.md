@@ -81,6 +81,9 @@ export RT_OUT=/yol/sonuclar/          # önbellek ve çıktılar; sonunda / olsu
 | 25 | `python scripts/25_era5_interpolasyon_kontrol.py [10dk]` | dakikalar | ERA5 doldurma yönteminin etkisi (yalnız ölçüm) |
 | 26 | `python scripts/26_mimari_duyarlilik.py gru 57` ve `... tcn 57` | ~1–3 sa her mimari (15 eğitim) | `mimari_gru_T57.pkl`, `mimari_tcn_T57.pkl` + ekranda LSI ve DM özeti (aynı protokol GRU / nedensel TCN ile) |
 | 27 | `python scripts/27_kayip_duyarlilik.py mae 57` (veya `huber 57`) | ~30–60 dk (15 eğitim) | `kayip_mae_T57.pkl` + ekranda MAE, LSI ve DM özeti (aynı LSTM, MSE yerine MAE kaybıyla) |
+| 28 | `python scripts/28_referans_modeller.py` | dakikalar (eğitim yok) | `referans_modeller.csv`: persistence, iklimsel ortalama ve Nielsen vd. (1998) referansının MAE/RMSE değerleri (altı türbin, altı ufuk) ve eldeki tahminlerin Nielsen'e göre skill'i |
+| 29 | `python scripts/29_nedensellik_sertifikasi.py` | ~1–2 sa (çoğu tam seri VMD) | `sertifika_profil_T57.csv`, `sertifika_onek_T57.csv`: gelecek-pertürbasyon profili ve önek değişmezliği testi (dört işleç) |
+| 30 | `python scripts/30_filtre_sayisal_kontrol.py 57` | dakikalar | LCSF Butterworth (b,a) biçimi ile SOS biçiminin bileşen çıktılarının karşılaştırması |
 
 Rolling VMD en pahalı adımdır (tek türbinde 35 bin VMD çağrısı); bloklar `RT_OUT` içine önbelleklenir ve
 yarıda kalırsa aynı komut kaldığı yerden devam eder. Colab için hazır defter: `notebooks/Colab_calistir.ipynb`.
@@ -106,6 +109,9 @@ Paket, makale sonuçlarını üreten Colab defterlerinden (`notebooks/orijinal_d
 ## Bilinen sınırlar
 
 - Tek veri seti (SDWPF), tek rüzgâr çiftliği; test dönemi 13 Eylül–31 Aralık 2021 (sonbahar–kış).
+- Nielsen referansı MSE bakımından eniyidir; MAE'de persistence'tan kötü olabilir, bu yüzden her iki ölçütle raporlanmalıdır (betik 28 ikisini de verir).
+- `certificate.py` sertifikası, denenen kesim anları, gecikmeler ve büyüklükler için "bağımlılık saptanmadı" der; nedenselliğin kanıtı değildir.
+- `evaluation.lambda_orani`: λ [0,1] aralığında kalmayabilir; oracle'a duyarlıdır (makale Bölüm 6.14).
 - Ana deneylerde tek LSTM mimarisi; GRU ve nedensel TCN ile küçük bir tekrar için `scripts/26_mimari_duyarlilik.py`.
 - Tohum tekrarı (42–49) yalnızca 1 saatlik ufukta ve LSTM tabanlı modellerde yapılmıştır; 3 ve 6 saatlik ufuklar altı türbinde tek tohumludur.
 - Maliyet ölçümü makineye bağlıdır (Python, tek çekirdek); donanım makalede belirtilmiştir.
