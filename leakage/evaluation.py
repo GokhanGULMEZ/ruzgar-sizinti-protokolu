@@ -31,19 +31,21 @@ def lambda_orani(e_nedensel, e_sizdiran, e_oracle):
     return float(lam), ('' if 0 <= lam <= 1 else 'lambda [0,1] dışında (oracle sızdırandan kötü veya sızdıran nedenselden kötü)')
 
 
-def dm_test(y, p1, p2, h=1, loss='abs'):
+def dm_test(y, p1, p2, h=1, loss='abs', lags=None):
     """Diebold-Mariano testi + Harvey-Leybourne-Newbold (1997) küçük örneklem düzeltmesi.
-    DM < 0: ilk model (p1) daha iyi. h: tahmin ufku (adım) -> Newey-West benzeri uzun dönem varyans."""
+    DM < 0: ilk model (p1) daha iyi. h: tahmin ufku (adım) -> Bartlett ağırlıklı uzun dönem varyans (varsayılan h-1 gecikme).
+    lags: duyarlılık analizi için gecikme sayısı (None -> h-1; sonuçlar önceki sürümle aynıdır)."""
     e1, e2 = y - p1, y - p2
     d = (np.abs(e1) - np.abs(e2)) if loss == 'abs' else (e1 ** 2 - e2 ** 2)
     T = len(d); dbar = d.mean(); dc = d - dbar
     lrv = np.dot(dc, dc) / T
-    for k in range(1, max(h, 1)):
-        lrv += 2 * (1 - k / h) * np.dot(dc[k:], dc[:-k]) / T
+    nl = max(h, 1) - 1 if lags is None else int(lags)
+    for k in range(1, nl + 1):
+        lrv += 2 * (1 - k / (nl + 1)) * np.dot(dc[k:], dc[:-k]) / T
     lrv = max(lrv, 1e-12)
     dm = dbar / np.sqrt(lrv / T)
     dm_c = dm * np.sqrt((T + 1 - 2 * h + h * (h - 1) / T) / T)
-    p = 2 * (1 - stats.t.cdf(abs(dm_c), df=T - 1))
+    p = 2 * stats.t.sf(abs(dm_c), df=T - 1)               # sf: çok küçük p-değerlerinde sayısal iptal yok
     return dict(DM=dm_c, p_raw=p, T=T, loss=loss)
 
 

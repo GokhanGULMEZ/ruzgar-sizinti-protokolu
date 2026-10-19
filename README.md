@@ -35,7 +35,7 @@ Model kısaltmaları: **B1** Persistence · **B2** Raw LSTM · **B3** CatBoost D
 pip install -r requirements.txt
 ```
 Test edilen sürümler: Python 3.11 (sentetik testler; numpy 2.4, pandas 3.0, scipy 1.17, catboost 1.2, tensorflow 2.21 CPU) ve Colab Python 3.13 (gerçek veri, T10 eşleşmesi).
-Colab'da `catboost` ve `vmdpy` dışındaki paketler hazır gelir. Makale sonuçlarının üretildiği kesin paket sürümleri `requirements_kilit.txt` dosyasındadır (Colab'da `pip freeze` çıktısı).
+Colab'da `catboost` ve `vmdpy` dışındaki paketler hazır gelir. Makale sonuçlarının üretildiği kesin paket sürümleri `requirements_kilit.txt` dosyasındadır (Colab'da `pip freeze` çıktısından, yalnızca paketin kullandığı kütüphaneler).
 
 ## Veri
 

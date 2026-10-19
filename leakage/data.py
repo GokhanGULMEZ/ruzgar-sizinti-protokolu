@@ -89,16 +89,19 @@ class TurbineData:
     def sc(self, x):
         return (x[FEATURES].values - self.mn) / self.rng
 
-    def get_xy(self, L, H):
-        """Yalnız 37 öznitelikle pencereler (B1-B3)."""
-        return self.get_xy_ext(L, H, np.zeros((self.N, 0)))
+    def get_xy(self, L, H, skip=0):
+        """Yalnız 37 öznitelikle pencereler (B1-B3). skip>0: serinin ilk `skip` satırı pencerelerden dışlanır
+        (ayrıştırma kollarında rolling VMD penceresi nedeniyle dışlanan örneklerle eşit eğitim kümesi için; skip=W-1)."""
+        return self.get_xy_ext(L, H, np.zeros((self.N, 0)), skip)
 
-    def get_xy_ext(self, L, H, U):
+    def get_xy_ext(self, L, H, U, skip=0):
         """37 öznitelik + ayrıştırma bileşenleri U (N x K, eğitimde ölçeklenmiş) ile pencereler."""
         out = {}
         for ad, x in (('tr', self.tr), ('va', self.va), ('te', self.te)):
             idx = self.d.index.get_indexer(x.index)
-            Xw, t, y, yc = make_windows(np.hstack([self.sc(x), U[idx]]), x['Patv'].values, L, H)
+            Xs = np.hstack([self.sc(x), U[idx]])
+            if skip: Xs[idx < skip] = np.nan
+            Xw, t, y, yc = make_windows(Xs, x['Patv'].values, L, H)
             out[ad] = dict(X=Xw, t=t, y=y, yc=yc)
         return out
 
