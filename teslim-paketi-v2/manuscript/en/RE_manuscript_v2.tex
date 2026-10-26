@@ -1,0 +1,1132 @@
+% =====================================================================
+%  SUBMISSION PACKAGE v2 — RENEWABLE ENERGY (Elsevier), elsarticle
+%
+%  Compile:  pdflatex RE_manuscript_v2.tex  (x2)
+%  Submission form: \documentclass[review]{elsarticle} gives double
+%  spacing + line numbers, which Elsevier review expects.
+%
+%  STATUS MARKERS
+%    [NEW]   written in full in this version
+%    [CARRY] prose exists in draft v2 (.docx); port it, do not retype
+%            numbers — every table below is transferred verbatim from
+%            the .docx extraction
+%    [TO COMPUTE] requires a run not yet made
+%
+%  RULE: no number appears here unless it was transferred from a draft
+%  v2 table or is reproduced by a script in the code package.
+% =====================================================================
+
+\documentclass[review,3p,times]{elsarticle}
+
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,array,longtable,graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\usepackage{textcomp}
+\journal{Renewable Energy}
+
+\newcommand{\todo}[1]{\textbf{[TO COMPUTE: #1]}}
+\newcommand{\carry}[1]{\textsf{\small [CARRY --- #1]}}
+
+\begin{document}
+
+% =====================================================================
+\begin{frontmatter}
+
+\title{Leakage-free short-term wind power forecasting at turbine level:
+a low-latency causal filter bank, a training-free causality certificate,
+and the cost of honest evaluation}
+
+% ---- authors: order to be fixed before submission; see note in README
+\author[tog-ce]{Gökhan Gülmez}
+\author[tog-ie]{Kadir Sarıkaya\corref{cor1}}
+\cortext[cor1]{Corresponding author.}
+\ead{kadir.sarikaya@gop.edu.tr}
+
+\affiliation[tog-ce]{organization={Department of Computer Engineering,
+  Faculty of Engineering and Architecture, Tokat Gaziosmanpaşa University},
+  city={Tokat}, country={Türkiye}}
+\affiliation[tog-ie]{organization={Department of Industrial Engineering,
+  Faculty of Engineering and Architecture, Tokat Gaziosmanpaşa University},
+  city={Tokat}, country={Türkiye}}
+
+% ---------------------------------------------------------------
+% HIGHLIGHTS — Elsevier: 3–5 bullets, each at most 85 characters
+% including spaces. Counts given in comments; verify in the
+% submission system, which enforces the limit.
+% ---------------------------------------------------------------
+\begin{highlights}
+\item Full-series VMD understates causal MAE by 34--57\% on six SDWPF turbines % 70
+\item A training-free certificate separates causal from leaky decomposition % 74
+\item A locked causal filter bank matches rolling VMD at 1300x lower latency % 75
+\item Under a causal protocol decomposition adds nothing over raw SCADA inputs % 76
+\item An oracle-normalised ratio shows how much admissible leak is realised % 73
+\end{highlights}
+
+% ---------------------------------------------------------------
+% ABSTRACT  [NEW] — 248 words. Reframed for Renewable Energy: the
+% operational consequence (deployable accuracy, update cost) leads.
+% ---------------------------------------------------------------
+\begin{abstract}
+Decomposition-based hybrids dominate the short-term wind power forecasting
+literature, but they are usually evaluated by decomposing the whole power
+series before the train/test split, so the features describing a test-period
+instant encode that instant's own future. Honest evaluation requires
+recomputing the decomposition from past data only at every forecast origin,
+and that is computationally expensive --- which is why it is rarely done. This
+study quantifies the artefact and removes the cost barrier for turbine-level
+SCADA forecasting. On six turbines of the SDWPF farm, over horizons from
+0.5 to 6~h and eight random initialisations, full-series variational mode
+decomposition (VMD) understates the mean absolute error of the identical
+causal pipeline by 34--57\%; the gap is significant on every turbine under
+Diebold--Mariano tests with Holm correction and is unchanged when the
+forecaster is trained with an absolute-error loss. A look-ahead dose--response
+experiment attributes the gap to future information rather than to amplitude,
+phase or boundary effects. We introduce two instruments: a training-free
+causality certificate that probes an operator with future perturbations and
+prefix truncation, and reports a leakage reach and gain rather than a pass/fail
+verdict; and an oracle-normalised ratio that expresses how much of the leakage
+an operator admits it actually realises. We then show that a causal spectral
+filter bank whose bands are locked from the training period attains causal
+accuracy statistically indistinguishable from rolling VMD at roughly
+1300 times lower per-update latency, making leakage-free evaluation affordable
+at farm scale. Under the causal protocol, decomposition yields no consistent
+accuracy gain over raw SCADA inputs.
+\end{abstract}
+
+\begin{keyword}
+wind power forecasting \sep SCADA \sep temporal data leakage \sep
+variational mode decomposition \sep causal preprocessing \sep
+evaluation protocol \sep Diebold--Mariano test
+\end{keyword}
+
+\end{frontmatter}
+
+% =====================================================================
+\section{Introduction}\label{sec:intro}
+% =====================================================================
+% [NEW]
+
+\subsection{Operational motivation}
+
+Short-term wind power forecasts drive unit commitment, reserve procurement,
+intraday trading and curtailment decisions, so the accuracy figure a
+forecaster reports is not an academic quantity: it is the basis on which an
+operator sizes reserve. A figure that cannot be reproduced in deployment
+therefore mis-sizes reserve, and the error is one-sided --- published accuracy
+that is too good leads to reserve that is too small.
+
+Among published short-term wind power forecasters, decomposition-based
+hybrids are the most common design: the observed power series is separated
+into frequency components and a learner is trained on those components.
+Qian et al.~\cite{qian2019} survey the family. The design rests on an
+evaluation choice that is rarely stated: \emph{when} the decomposition is
+fitted. Variational mode decomposition (VMD)~\cite{dragomiretskiy2014} and the
+empirical-mode family are global, non-causal transforms. If one is fitted once
+over a series that contains the test period, the component value at time $t$
+is a function of observations after $t$. The target is never shown to the
+model, but information about it is.
+
+\subsection{Why the honest protocol is not adopted}
+
+The remedy is known: recompute the decomposition from past-only data at each
+forecast origin. Chen et al.~\cite{chen2022} catalogue the problem as the
+``boundary issue'' and classify solutions as algorithm-, sampling- or
+iteration-based. The obstacle is cost. Rolling redecomposition requires a new
+variational optimisation at every forecast instant; Jeon et al.~\cite{jeon2026}
+state plainly that this carries ``a real computational cost'' and call it ``the
+price of an evaluation that reflects deployment''. At a farm of the size of
+SDWPF (134 turbines) that price is prohibitive, and the literature has
+responded by not paying it.
+
+This paper takes the cost seriously as an engineering problem rather than as a
+caveat. Its central practical claim is that the price can be reduced by about
+three orders of magnitude without measurable loss of causal accuracy, which
+makes the honest protocol usable at farm scale.
+
+\subsection{Position of this work}\label{sec:position}
+
+We do not claim to be the first to observe or to measure the artefact, and the
+reader should be clear about what is already established. Rolling or
+sample-wise decomposition has been proposed as a remedy for gasoline
+consumption~\cite{yu2021}, crude oil prices~\cite{xu2023}, power
+load~\cite{xuA2025,wangj2024}, wind speed~\cite{wang2024,yangD2024,tan2025,pang2026,zhou2024}
+and ultra-short-term wind power~\cite{huo2024}. Quantified comparisons also
+exist: Xu and Wang~\cite{xu2023} contrast rolling and whole-series EEMD under
+the same predictors; Zhang et al.~\cite{zhang2025} report, across six datasets
+and three decompositions, that the abnormal error reduction is carried mainly
+by the high-frequency components; Zhou et al.~\cite{zhou2024} quantify the
+overestimation in wind speed forecasting as 40--55\% in mean absolute and
+65--85\% in mean squared error; and Jeon et al.~\cite{jeon2026} report, for
+German load, solar and wind generation plus a benchmark series, that the
+whole-series protocol understates the error of the identical causal pipeline
+by 30--93\%, attributing the artefact to look-ahead rather than to history
+length. Valdivieso et al.~\cite{valdivieso2026} report a comparable magnitude
+for load.
+
+Three things are left open by that body of work, and they are what this paper
+contributes.
+
+\emph{First, the cost of the remedy is named but not addressed.} None of the
+studies above measures, or reduces, the per-update latency of causal
+decomposition. Section~\ref{sec:lcsf} defines a locked causal spectral filter
+bank and Section~\ref{sec:cost} measures its latency against rolling VMD on
+the same series.
+
+\emph{Second, there is no operational test of an operator's causality.}
+Jeon et al.~\cite{jeon2026} offer a five-point checklist, and Kapoor and
+Narayanan~\cite{kapoor2023} offer reporting sheets; neither can be applied to
+a given operator to decide whether it leaks. Section~\ref{sec:certificate}
+defines a training-free certificate that can, and reports a profile rather
+than a verdict.
+
+\emph{Third, the magnitude has been reported only as a raw error gap.} A raw
+gap is divided by the causal error, so it grows when the causal pipeline is
+weak and operators with different ceilings are not comparable.
+Section~\ref{sec:lambda} anchors the gap to an attainable, operator-relative
+oracle.
+
+The setting is also different in a way that matters for this journal:
+all the measurements above are on aggregate or national series at hourly
+resolution, whereas reserve and curtailment decisions are taken on
+turbine-level SCADA at 10--30~min. Turbine-level power has no spatial
+smoothing, much higher volatility, and pitch and curtailment artefacts. We
+therefore report the measurement at turbine level, under a single causal
+protocol, across turbines, horizons, random initialisations and forecaster
+families.
+
+\subsection{Contributions}
+
+\begin{enumerate}
+\item A \textbf{locked causal spectral filter bank (LCSF)} whose bands are
+learned from the training period only, attaining causal accuracy
+statistically indistinguishable from rolling VMD at roughly 1300 times lower
+per-update filtering latency (Sections~\ref{sec:lcsf}, \ref{sec:cost}).
+It is not offered as a more accurate forecaster; its value is that it makes
+the honest protocol affordable.
+\item A \textbf{training-free causality certificate}: a future-perturbation
+sensitivity profile $D(\tau;\delta)$ plus a prefix-invariance test, reporting
+a leakage \emph{reach} and \emph{gain}. It distinguishes leaky operators from
+one another --- the sensitivity of full-series VMD does not decay with lag,
+whereas that of two-sided filtering does (Sections~\ref{sec:certificate},
+\ref{sec:certres}). Resolved per component and weighted by the forecaster's
+reliance on each component, it yields a \textbf{weighted leakage exposure} and
+a graded acceptance criterion calibrated against run-to-run variability, in
+place of a pass/fail verdict on exact zero
+(Sections~\ref{sec:exposure}, \ref{sec:exposureres}).
+\item An \textbf{oracle-normalised leakage ratio} $\lambda$, bounded on an
+attainable operator-relative oracle, which orders the two leaky operators
+opposite to the raw gap (Sections~\ref{sec:lambda}, \ref{sec:lambdares}).
+\item A \textbf{turbine-level measurement} of the leakage-associated gap with
+Diebold--Mariano testing across six turbines, six horizons, eight seeds and
+four forecaster families, including the native 10-min grid.
+\item \textbf{Negative results reported in full}: under the causal protocol
+decomposition gives no consistent gain over raw SCADA inputs, and the position
+of causal models against persistence depends on the training loss.
+\end{enumerate}
+
+% =====================================================================
+\section{Related work}\label{sec:related}
+% =====================================================================
+% [NEW structure; absorbs draft v2 §2.1–§2.2, reordered so that the
+% closest prior art leads]
+
+\subsection{Decomposition-based wind power forecasting}
+\carry{draft v2 §2.1. Keep the VMD description. Add the filter-bank reading:
+Dragomiretskiy and Zosso~\cite{dragomiretskiy2014} describe VMD as a
+generalisation of the Wiener filter into multiple adaptive bands; this is the
+theoretical warrant for Section~\ref{sec:lcsf}. Add 8--12 recent
+decomposition-hybrid wind papers --- the literature being audited must be
+represented or the premise is unsupported.}
+
+\subsection{Controlled measurements of the artefact}
+\textsf{[NEW --- this subsection leads, because it contains the closest prior
+art.]} Jeon et al.~\cite{jeon2026} compare five feature regimes (no
+decomposition, full-series, split-then-decompose, rolling causal windows of
+30--365 days, and an expanding causal window) on four hourly series with three
+model families, ten seeds and Diebold--Mariano, Wilcoxon and Friedman tests.
+They report a 30--93\% understatement in 11 of 12 dataset--model combinations,
+attribute 91\% of the gap to look-ahead via the expanding-window regime, find
+that split-then-decompose leaves 77--101\% of the artefact intact, and find
+causally decomposed pipelines no better than undecomposed ones in 10 of 12
+combinations. Zhang et al.~\cite{zhang2025} reach the same qualitative
+conclusion over six datasets and three decompositions, and additionally
+attribute the artefact to the high-frequency components.
+Zhou et al.~\cite{zhou2024} quantify it for wind speed (40--55\% in PMAE,
+65--85\% in PMSE) and propose a rolling-decomposition model with a time-series
+extension. Valdivieso et al.~\cite{valdivieso2026} report 46--51\% for load.
+
+\textsf{Required text:} state explicitly what this study adds to these, using
+the three openings of Section~\ref{sec:position}, and do not restate the
+measurement itself as novel.
+
+\subsection{Leakage-preventing designs}
+\carry{draft v2 §2.2, second half. Chen et al.~\cite{chen2022};
+Yang et al.~\cite{yang2024}; Feng et al.~\cite{feng2026};
+Sesay~\cite{sesay2026}; Wang et al.~\cite{wang2024};
+Tan et al.~\cite{tan2025}; Haq et al.~\cite{haq2026};
+Pang and Dong~\cite{pang2026}; Huo et al.~\cite{huo2024};
+Wang et al.~\cite{wangj2024}; Quilty and Adamowski~\cite{quilty2018};
+Maslova et al.~\cite{maslova2015}.}
+
+\subsection{Evaluation practice in wind power forecasting}
+\textsf{[NEW]} The reference-model and metric conventions used here follow
+Nielsen et al.~\cite{nielsen1998}, Madsen et al.~\cite{madsen2005} and
+Messner et al.~\cite{messner2020}. González Sopeña et al.\ review performance
+evaluation methods for short-term statistical wind power
+forecasting~\cite{sopena2020} and propose a benchmarking framework applied to
+mode-decomposition models~\cite{sopena2022}; Lee et al.~\cite{lee2022} publish
+an open-source systematic validation framework and a benchmark exercise.
+Hong et al.~\cite{hong2020}, reviewing the field, advise authors who obtain
+exaggerated results to check ``if future information has leaked into the
+process''. Deignan et al.~\cite{deignan2025} study the portability and
+hyperparameter sensitivity of VMD- and EEMD-based wind power forecasters on
+SCADA data from Ireland and the UK and report that about four modes suffice.
+General treatments of leakage~\cite{kaufman2012,kapoor2023,rosenblatt2024} and
+of forecast-evaluation pitfalls~\cite{hewamalage2023} complete the picture.
+
+\subsection{Causal and online decomposition}
+\textsf{[NEW]} Short-time VMD~\cite{jia2026} and block-wise recursive sliding
+VMD~\cite{dan2023} reduce the cost of windowed decomposition; generalised VMD
+with prior centre frequencies~\cite{guo2021} fixes the bands, as LCSF does,
+but is not framed as a leakage remedy and is not benchmarked for latency in a
+forecasting pipeline. \todo{benchmark LCSF against a strictly causal
+short-time VMD and against recursive sliding VMD; verify the causality of the
+latter from its full text before use}
+
+\subsection{Positioning}
+\carry{draft v2 Table 1, rewritten. Rows: Jeon et al.~\cite{jeon2026},
+Zhang et al.~\cite{zhang2025}, Zhou et al.~\cite{zhou2024},
+Huo et al.~\cite{huo2024}, this study. Columns: series and resolution;
+what is compared; normalisation of the reported gap; sites / horizons / seeds;
+significance test; \emph{operational instrument offered}. The last column is
+where this study separates: a measured low-latency causal operator and an
+applicable certificate, against checklists elsewhere.}
+
+% =====================================================================
+\section{Data and protocol}\label{sec:data}
+% =====================================================================
+\carry{draft v2 §3.1--3.4 in full.}
+\begin{itemize}
+\item \S3.1 SDWPF~\cite{zhou2024sdwpf}; Sinovel SL1500/82, 1500~kW rating; the
+sampling-interval finding (15~min in 2020 and 10~min in 2021 in the file used)
+and the 30-min common grid. \textbf{Required before submission:} verify this
+against the figshare original and state the outcome.
+\item \S3.2 windowing, horizons, persistence. \textbf{Add} the reference
+models of Section~\ref{sec:reference} here.
+\item \S3.3 the 37 input features.
+\item \S3.4 chronological 70/15/15 split, 12-step purge, train-only scaling.
+\end{itemize}
+\todo{rolling-origin evaluation, or at minimum the main results by monthly
+test sub-period}
+\todo{external validation on a second farm (Kelmarsh, 6 turbines, 10-min
+SCADA~\cite{kelmarsh2022}), chosen to match the SDWPF subset size and to avoid
+the grid-harmonisation issue}
+
+% =====================================================================
+\section{Decomposition operators}\label{sec:operators}
+% =====================================================================
+\carry{draft v2 §4.1--4.2 and §4.4: full-series VMD (leaky), rolling VMD
+(causal), and the forecaster definitions (persistence, raw LSTM, CatBoost
+Direct, the LSTM variants, the residual CatBoost stage).}
+
+\subsection{Locked causal spectral filter bank}\label{sec:lcsf}
+\carry{draft v2 §4.3.} VMD is applied to the training partition only to obtain
+$K$ centre frequencies; the geometric means of adjacent centre frequencies
+become band edges, and a bank of third-order Butterworth filters (one
+low-pass, two band-pass, one high-pass) is applied in a strictly
+forward direction, with the initial state derived from the first observation.
+Applying the same bands zero-phase gives the leaky counterpart, which differs
+from the causal one only in filtering direction and therefore serves as a
+control operator.
+
+\textbf{Required additions.} (i) Ground the construction in the filter-bank
+reading of VMD~\cite{dragomiretskiy2014} and differentiate it from generalised
+VMD with prior centre frequencies~\cite{guo2021}. (ii) State that LCSF is not
+presented as a mathematical equivalent of VMD at test time. (iii) Report the
+second-order-section check (draft v2 §6.17): the largest difference between the
+transfer-function and second-order-section implementations was at most
+$8\times10^{-6}$~kW per component, so the numerical form does not affect the
+results.
+
+% =====================================================================
+\section{Evaluation framework}\label{sec:eval}
+% =====================================================================
+% [NEW] — the methodological core of the paper
+
+\subsection{Error metrics and significance}
+\carry{draft v2 §5: MAE, RMSE, nMAE, nRMSE, $R^2$; skill relative to a
+reference; Diebold--Mariano~\cite{dm1995} with Bartlett long-run variance and
+the Harvey--Leybourne--Newbold small-sample correction~\cite{hln1997}; Holm
+correction~\cite{holm1979}; block bootstrap~\cite{kunsch1989}.}
+
+\subsection{Reference models}\label{sec:reference}
+\textsf{[NEW]} Persistence alone is not the community reference. We adopt the
+MSE-optimal convex combination of Nielsen et al.~\cite{nielsen1998},
+\begin{equation}
+\hat p(t+k) = a_k\,p_t + (1-a_k)\,\bar p,
+\qquad
+a_k = \frac{\frac{1}{N}\sum_t \tilde p_t \tilde p_{t+k}}
+            {\frac{1}{N}\sum_t \tilde p_t^{\,2}},
+\qquad \tilde p_t = p_t-\bar p,
+\label{eq:nielsen}
+\end{equation}
+with the lag-$k$ autocorrelation $a_k$ and the mean $\bar p$ estimated on the
+training period only and separately per turbine, as those authors advise.
+As $a_k\to1$ it reduces to persistence and as $a_k\to0$ to climatology.
+Because the combination minimises squared error, its MAE can exceed that of
+persistence; both metrics are therefore reported, and skill is defined
+following Madsen et al.~\cite{madsen2005} with the metric set of
+Messner et al.~\cite{messner2020}.
+
+\subsection{Leakage ratios}\label{sec:lambda}
+For matched causal and leaky versions of one operator, the raw gap is
+\begin{equation}
+\mathrm{LSI} =
+\frac{E_{\mathrm{causal}}-E_{\mathrm{leaky}}}{E_{\mathrm{causal}}}\times 100 ,
+\label{eq:lsi}
+\end{equation}
+which divides by the causal error and so is inflated when the causal pipeline
+is weak --- the regime a leakage study is likely to be in --- and is not
+comparable across operators with different ceilings.
+\textsf{[NEW]} We therefore also report an oracle-normalised ratio. Let
+$E_{\mathrm{oracle}}$ be the error of the \emph{same} operator applied over a
+window that contains the target, i.e.\ the best this operator could do if
+allowed to see the answer. Then
+\begin{equation}
+\lambda =
+\frac{E_{\mathrm{causal}}-E_{\mathrm{leaky}}}
+     {E_{\mathrm{causal}}-E_{\mathrm{oracle}}}
+\label{eq:lambda}
+\end{equation}
+answers: of the leakage this operator admits, what fraction does the audited
+protocol realise? Oracle anchoring is established in forecast
+verification~\cite{wheatcroft2019}, with the caveat that a perfect anchor is
+often unattainable; Eq.~\eqref{eq:lambda} uses an attainable,
+operator-relative oracle instead. Two limits must be stated with every
+reported value: $\lambda$ is undefined when
+$E_{\mathrm{causal}}\le E_{\mathrm{oracle}}$, and because the look-ahead curve
+of rolling VMD is not monotone (Section~\ref{sec:mechanism}),
+$E_{\mathrm{oracle}}$ is a defined reference point rather than a strict upper
+bound. $\lambda$ complements the raw gap; it does not replace it.
+
+\subsection{Causality certificate}\label{sec:certificate}
+\textsf{[NEW]} Let $\Phi$ map a series $x$ to $K$ components, with
+$\Phi(x)_{t,k}$ the $k$th component at time $t$, and let
+$\mathcal F_t=\sigma(x_s: s\le t)$. The operator is \emph{causal} if
+$\Phi(x)_{t,k}$ is $\mathcal F_t$-measurable for every $t$ and $k$.
+
+Causality is a property of the computation, and for pipelines whose data
+availability does not depend on data \emph{values} it can be decided by static
+analysis. Full-series VMD, rolling VMD and the EMD family are not of that
+kind: each is an iterative optimisation whose output at $t$ depends on the
+values of the whole input window. For that class an empirical, operator-
+agnostic probe is the available instrument, and we state what it establishes:
+a necessary condition over a probed set, never the absence of leakage.
+
+\paragraph{Test 1: future-perturbation profile.}
+For a perturbation epoch $t_0$, magnitude $\delta$ and lag $\tau\ge0$,
+\begin{equation}
+D_\Phi(\tau;\delta)=
+\max_{t\le t_0-\tau}\;\max_k\;
+\bigl|\Phi(x)_{t,k}-\Phi\!\left(x\oplus\delta\mathbf 1_{\{s>t_0\}}\right)_{t,k}\bigr| ,
+\label{eq:profile}
+\end{equation}
+where $x\oplus\delta\mathbf 1_{\{s>t_0\}}$ adds an independent perturbation of
+scale $\delta$ to every observation strictly after $t_0$. If $\Phi$ is causal,
+$D_\Phi\equiv0$. Reporting the profile rather than a single value yields the
+\emph{leakage reach}, the largest probed $\tau$ at which $D_\Phi>0$, and the
+\emph{leakage gain}, the growth of $D_\Phi$ in $\delta$.
+
+\paragraph{Test 2: prefix invariance.}
+Independently, require $\Phi(x_{1:t})_{t,k}=\Phi(x_{1:N})_{t,k}$ at a set of
+random cut points. Test~1 probes sensitivity to a perturbation of the future;
+Test~2 probes dependence on the existence of the future.
+
+\paragraph{What it is not.} Passing does not prove causality; it establishes
+that no dependence was detected at the probed epochs, lags and magnitudes, and
+must be reported with those parameters. Related instruments operate on code or
+on process rather than on the temporal behaviour of a data-adaptive
+operator~\cite{kapoor2023,kaufman2012}.
+
+\subsection{Weighted leakage exposure and a graded criterion}\label{sec:exposure}
+% [NEW — TO COMPUTE]
+
+Equation~\eqref{eq:profile} takes a maximum over components, so it answers only
+whether an operator leaks. Two further questions matter in practice: \emph{which}
+components carry the leak, and whether the forecaster actually uses them. The
+first has been studied: Zhang et al.~\cite{zhang2025} add intrinsic mode
+functions to a forecaster one at a time and report that the high-frequency
+components carry most of the artefact. That measure, however, fuses two distinct
+quantities --- how much future the operator exposes in a component, and how much
+the model exploits it --- because it is read off the change in forecast error.
+The certificate separates them, because $D_k$ is a property of $\Phi$ alone.
+
+Resolve Eq.~\eqref{eq:profile} per component,
+\begin{equation}
+D_{\Phi,k}(\tau;\delta)=
+\max_{t\le t_0-\tau}
+\bigl|\Phi(x)_{t,k}-\Phi\!\left(x\oplus\delta\mathbf 1_{\{s>t_0\}}\right)_{t,k}\bigr| ,
+\label{eq:profilek}
+\end{equation}
+and let $w_k$ be the forecaster's reliance on component $k$, normalised to
+$\hat w_k = w_k/\sum_j w_j$ (we report all three measures already computed in
+Appendix~C: prediction-value change, permutation $\Delta$MAE and mean absolute
+SHAP). Scaling each component by its own standard deviation $\sigma_k$ to make
+the sum dimensionless, the \emph{weighted leakage exposure} is
+\begin{equation}
+\Lambda(\tau;\delta)=\sum_{k=1}^{K}\hat w_k\,\frac{D_{\Phi,k}(\tau;\delta)}{\sigma_k}.
+\label{eq:exposure}
+\end{equation}
+$\Lambda=0$ if and only if the operator is causal or the model ignores every
+leaking component. The concentration of
+$\{\hat w_k D_{\Phi,k}/\sigma_k\}_{k=1}^{K}$ indicates whether the leak is
+carried by one component or spread across the bank.
+
+\paragraph{A graded acceptance criterion.} The certificate as stated above is
+binary: an operator passes only if $D$ is exactly zero. That is brittle, since a
+component that leaks negligibly and is never used fails on the same footing as
+one that carries the whole artefact. We therefore propose accepting a pipeline
+when
+\begin{equation}
+\Lambda(0;\delta_{\mathrm{ref}})\le c ,
+\label{eq:criterion}
+\end{equation}
+and we calibrate $c$ on the quantity a practitioner can already measure: $c$ is
+set at the exposure whose implied error inflation falls below the run-to-run
+standard deviation of the same forecaster across random initialisations
+(2.4--6.6~kW in these data, Table~\ref{tab:seeds} and draft v2 §6.3). The
+criterion then reads: \emph{a pipeline is acceptable when the leakage it still
+admits moves the error less than retraining it does.} Both $\Lambda$ and the
+raw profile are reported, so a reader can apply either.
+
+\paragraph{Scope of the claim.} $w_k$ is model-dependent, is not an integer and
+is not fixed across retrainings, so Eq.~\eqref{eq:criterion} is a weighted
+\emph{acceptance criterion}, not a weighted $k$-out-of-$n$ reliability model, and
+it is presented as such. The symbol $\Lambda$ is distinct from the
+oracle-normalised ratio $\lambda$ of Section~\ref{sec:lambda}.
+
+\todo{(i) resolve \texttt{leakage/certificate.py::pertürbasyon\_profili} per
+component --- it currently reduces over $k$ --- and re-run script 29; the cost is
+dominated by full-series VMD, about 1--2 h with the default probe grid.
+(ii) take $\hat w_k$ from the existing Appendix~C importance table; no retraining
+is required. (iii) calibrate $c$ against the eight-seed MAE standard deviations
+already reported.}
+
+% =====================================================================
+\section{Results}\label{sec:results}
+% =====================================================================
+% Main text keeps ten display items; everything else moves to appendices.
+% All tables below transferred verbatim from draft v2.
+
+\subsection{Magnitude of the leakage-associated gap}\label{sec:magnitude}
+\carry{draft v2 §6.1--6.2 prose.}
+
+\begin{table}[htbp]\centering
+\caption{Turbine 57, multi-horizon MAE (kW) and LSI (seed 42).}
+\label{tab:horizon}
+\footnotesize
+\begin{tabular}{lrrrrrr}
+\toprule
+Horizon (h) & Persistence & Raw LSTM & CatBoost Direct &
+Rolling VMD (causal) & Full-series VMD (leaky) & LSI-VMD (\%) \\
+\midrule
+0.5 &  77.80 &  90.04 &  78.78 &  86.76 & 53.29 & 38.6 \\
+1   & 108.42 & 114.55 & 106.12 & 116.11 & 64.71 & 44.3 \\
+2   & 153.78 & 164.28 & 143.35 & 158.98 & 67.73 & 57.4 \\
+3   & 187.89 & 211.91 & 168.05 & 191.00 & 73.43 & 61.6 \\
+4   & 214.98 & 212.26 & 187.36 & 215.86 & 96.81 & 55.2 \\
+6   & 255.53 & 240.69 & 215.69 & 247.92 & 88.55 & 64.3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering
+\caption{One-hour horizon, six turbines, seed 42. MAE in kW; skill relative to
+persistence (\%) in parentheses. DM: Diebold--Mariano statistic, negative when
+the leaky model has the lower error; all $p<10^{-15}$.}
+\label{tab:sixturbines}
+\scriptsize
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+& \multicolumn{5}{c}{Causal} & \multicolumn{2}{c}{Leaky} &
+\multicolumn{2}{c}{LSI (\%)} & \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Turbine & Persist. & Raw LSTM & CatBoost & Rolling VMD & LCSF &
+Full VMD & LCSF 2-sided & VMD & LCSF & DM (VMD) \\
+\midrule
+57  & 108.42 & 114.55 (-5.7)  & 106.12 (2.1)  & 116.11 (-7.1)  & 116.29 (-7.3)  & 64.71 (40.3) & 57.34 (47.1) & 44.3 & 50.7 & $-26.56$ \\
+10  & 110.58 & 131.73 (-19.1) & 116.72 (-5.6) & 128.17 (-15.9) & 127.71 (-15.5) & 69.58 (37.1) & 55.57 (49.7) & 45.7 & 56.5 & $-27.82$ \\
+83  &  95.85 & 114.43 (-19.4) &  98.84 (-3.1) & 111.64 (-16.5) & 111.34 (-16.2) & 61.67 (35.7) & 57.89 (39.6) & 44.8 & 48.0 & $-24.77$ \\
+120 &  95.08 &  97.32 (-2.4)  &  93.37 (1.8)  &  95.59 (-0.5)  &  96.83 (-1.8)  & 63.42 (33.3) & 57.29 (39.7) & 33.7 & 40.8 & $-18.49$ \\
+61  & 107.31 & 117.78 (-9.8)  & 107.11 (0.2)  & 119.48 (-11.3) & 119.26 (-11.1) & 70.15 (34.6) & 56.01 (47.8) & 41.3 & 53.0 & $-26.12$ \\
+84  & 103.19 & 109.12 (-5.7)  & 102.40 (0.8)  & 116.34 (-12.7) & 110.15 (-6.7)  & 72.61 (29.6) & 55.03 (46.7) & 37.6 & 50.0 & $-24.66$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering
+\caption{LSI (\%), mean $\pm$ standard deviation over eight seeds (42--49).
+The turbines are on one farm and are not independent replicates.}
+\label{tab:seeds}
+\footnotesize
+\begin{tabular}{lrr}
+\toprule
+Turbine & LSI-VMD & LSI-LCSF \\
+\midrule
+57  & $39.9\pm4.4$ & $48.7\pm5.0$ \\
+10  & $45.1\pm3.1$ & $53.1\pm3.8$ \\
+83  & $45.2\pm2.9$ & $52.0\pm4.5$ \\
+120 & $37.7\pm5.2$ & $47.0\pm5.2$ \\
+61  & $42.8\pm5.7$ & $50.4\pm4.9$ \\
+84  & $40.7\pm4.7$ & $50.3\pm2.9$ \\
+\midrule
+Across-turbine mean & $41.9\pm3.0$ & $50.3\pm2.2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mechanism: the look-ahead dose--response}\label{sec:mechanism}
+\carry{draft v2 §6.10--6.11, condensed. This is the strongest mechanistic
+evidence and should lead the subsection; the non-monotonicity at $m=8$ and the
+Ridge control are compressed to one paragraph plus Appendix~A.}
+
+\begin{table}[htbp]\centering
+\caption{Turbine 57, 1~h, three seeds: MAE (seed mean) and LSI-LCSF
+(mean $\pm$ std) by the amount of look-ahead $m$ granted to the component.
+Conditions with $m\ge H=2$ contain the target and are target-inclusive stress
+tests, not realistic use.}
+\label{tab:dose}
+\footnotesize
+\begin{tabular}{lrrr}
+\toprule
+Look-ahead $m$ (steps) & Future (min) & MAE (kW) & LSI-LCSF (\%) \\
+\midrule
+Causal LCSF (one-sided, reference) & 0 & 115.94 & --- \\
+0 (zero-phase, no future)          & 0 & 113.27 & $2.3\pm1.4$ \\
+1                                  & 30 & 85.86 & $26.0\pm1.8$ \\
+2 ($=H$, target in component)      & 60 & 11.05 & $90.5\pm1.0$ \\
+4                                  & 120 & 29.10 & $74.9\pm0.6$ \\
+8                                  & 240 & 59.43 & $48.7\pm6.3$ \\
+16                                 & 480 & 63.50 & $45.2\pm2.7$ \\
+48                                 & 1440 & 61.60 & $46.8\pm5.1$ \\
+$\infty$ (full series, two-sided)  & --- & 61.73 & $46.7\pm7.7$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Zero-phase filtering without look-ahead raises the gap only to 2.3\%, so the
+difference between two-sided and one-sided filtering is not an artefact of
+amplitude or phase. One step of look-ahead raises it to 26.0\%, and including
+the target raises it to 90.5\%. A backward-shifted causal control, which moves
+the component away from the window end without granting any future, changes MAE
+by about 1\% (draft v2 §6.11), so the boundary effect is small in these data.
+
+\subsection{Causality certificate}\label{sec:certres}
+\carry{draft v2 §6.18 prose.} The probe set was
+$\tau\in\{0,1,2,4,8,16,32\}$ steps, $\delta\in\{50,100,200,400\}$~kW,
+20 perturbation epochs (5 for full-series VMD) and 50 random cut points
+(10 for full-series VMD).
+
+\begin{table}[htbp]\centering
+\caption{Causality certificate, Turbine 57. $D(\tau;\delta=200\,\mathrm{kW})$
+in kW. Reach is the largest probed $\tau$ with $D>0$; 32 steps is the grid
+bound.}
+\label{tab:cert}
+\footnotesize
+\begin{tabular}{lrrrlrl}
+\toprule
+Operator & $D(\tau{=}0)$ & $D(\tau{=}8)$ & $D(\tau{=}32)$ & Reach &
+Prefix max.\ diff.\ (kW) & Prefix violations \\
+\midrule
+LCSF, causal              &   0.00 &   0.00 &  0.00 & none      & 0 & 0 / 50 \\
+Rolling VMD, causal       &   0.00 &   0.00 &  0.00 & none      & 0 & 0 / 50 \\
+LCSF, two-sided (leaky)   &  87.21 &  55.39 & 10.17 & $\ge32$   & 1{,}060 & 50 / 50 \\
+Full-series VMD (leaky)   & 113.49 & 235.44 & 96.57 & $\ge32$   & 386 & 10 / 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Both causal operators give exactly zero at every probed $\tau$ and $\delta$ and
+show no prefix violation. The two leaky operators differ qualitatively: the
+sensitivity of two-sided filtering decays with lag, as a finite-support
+operator must, whereas that of full-series VMD does not, which is consistent
+with a global variational optimisation that redistributes the whole
+decomposition when any part of the series changes. The profile therefore
+distinguishes \emph{kinds} of leakage, not only its presence.
+
+\subsection{Weighted leakage exposure}\label{sec:exposureres}
+% [TO COMPUTE]
+\todo{Table: per operator, the per-component $D_{\Phi,k}(0;200\,\mathrm{kW})$
+from Eq.~\eqref{eq:profilek}, the normalised reliance $\hat w_k$ from
+Appendix~C, the resulting exposure $\Lambda$ from Eq.~\eqref{eq:exposure}, and
+the concentration of the per-component products. Then the calibrated threshold
+$c$ of Eq.~\eqref{eq:criterion} and which operators fall on each side of it.
+Expected reading, to be confirmed rather than assumed: the two causal operators
+give $\Lambda=0$ exactly; two-sided LCSF and full-series VMD are separated not
+only in magnitude but in concentration, since the VMD profile does not decay
+with lag whereas the filter-bank profile does
+(Table~\ref{tab:cert}).}
+
+\subsection{Oracle-normalised ratio}\label{sec:lambdares}
+\carry{draft v2 §6.14 prose, including its caveats.}
+
+\begin{table}[htbp]\centering
+\caption{Turbine 57, 1~h, three seeds: the four anchors of the error scale and
+$\lambda$. $E_{\mathrm{oracle}}$ is the $m=H=2$ target-inclusive condition.
+All errors in kW.}
+\label{tab:lambda}
+\footnotesize
+\begin{tabular}{lrrrrr}
+\toprule
+Operator & $E_{\mathrm{causal}}$ & $E_{\mathrm{leaky}}$ &
+$E_{\mathrm{oracle}}$ & LSI (\%) & $\lambda$ \\
+\midrule
+Two-sided LCSF  & 115.94 & 61.73 & 11.05 & 46.7 & 0.52 \\
+Full-series VMD & 116.78 & 68.66 & 64.64 & 41.1 & 0.92 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The two measures order the operators oppositely: the raw gap is larger for
+two-sided LCSF, whereas $\lambda$ shows that full-series VMD realises almost
+all of the leakage its operator admits while two-sided filtering realises about
+half. The raw gap compares the operators against different ceilings.
+This is one turbine, one horizon and three seeds; the oracle of full-series VMD
+is weak (64.64 against 68.66~kW), so $\lambda$ is sensitive in that cell.
+\todo{$\lambda$ for the remaining turbines and horizons}
+
+\subsection{Cost of the causal protocol}\label{sec:cost}
+\carry{draft v2 §6.4 prose.}
+
+\begin{table}[htbp]\centering
+\caption{Forecast-instant latency, Turbine 57, single core; median of 200
+positions along the series for rolling VMD.}
+\label{tab:cost}
+\footnotesize
+\begin{tabular}{lrr}
+\toprule
+Method & Single forecast instant & Test set (5{,}252 points) \\
+\midrule
+Rolling VMD ($W=672$) & 89.9 ms & $\approx$ 8 min \\
+LCSF (online update)  & 69 \textmu s & 0.36 s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Causal accuracy is statistically indistinguishable at 1 and 6~h, with a small
+but significant LCSF advantage at 3~h. The ratio is implementation- and
+hardware-dependent; the order of magnitude ($10^3$) is the result. At farm
+scale the consequence is direct: rolling VMD requires on the order of an hour
+per turbine for the full series, which for 134 turbines makes per-origin
+redecomposition impractical, whereas the locked bank reduces it to seconds.
+
+\subsection{Causal models against the reference models}
+\carry{draft v2 §6.15 prose, with its caveat that the Nielsen reference is the
+weaker MAE reference and that positive skill against it must not be read as a
+stronger result than skill against persistence.}
+
+\begin{table}[htbp]\centering
+\caption{One-hour horizon, six turbines: reference errors (kW) and MAE skill
+(\%) of the causal models relative to the Nielsen reference,
+Eq.~\eqref{eq:nielsen}.}
+\label{tab:reference}
+\scriptsize
+\begin{tabular}{lrrrrrrl}
+\toprule
+Turbine & $a_k$ & MAE pers. & MAE Nielsen & MAE clim. & RMSE pers. &
+RMSE Nielsen & Skill vs Nielsen: LSTM / VMD / LCSF / CatBoost \\
+\midrule
+T57  & 0.837 & 108.41 & 125.67 & 338.07 & 190.21 & 186.37 & 8.8 / 7.6 / 7.5 / 15.6 \\
+T10  & 0.847 & 110.58 & 135.29 & 405.95 & 199.52 & 198.35 & 2.6 / 5.3 / 5.6 / 13.7 \\
+T83  & 0.837 &  95.85 & 122.54 & 371.01 & 181.64 & 182.63 & 6.6 / 8.9 / 9.1 / 19.3 \\
+T120 & 0.819 &  95.08 & 112.11 & 292.29 & 169.21 & 165.78 & 13.2 / 14.7 / 13.6 / 16.7 \\
+T61  & 0.826 & 107.31 & 127.02 & 335.40 & 190.36 & 186.82 & 7.3 / 5.9 / 6.1 / 15.7 \\
+T84  & 0.833 & 103.19 & 119.89 & 322.52 & 180.62 & 177.20 & 9.0 / 3.0 / 8.1 / 14.6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Sensitivity to the training loss}
+\carry{draft v2 §6.16 prose.}
+
+\begin{table}[htbp]\centering
+\caption{Turbine 57, 1~h, LSTM trained with an absolute-error loss, three
+seeds (42--44). Persistence MAE is 108.41~kW.}
+\label{tab:loss}
+\footnotesize
+\begin{tabular}{llrr}
+\toprule
+Model & Protocol & MAE (kW) & MAE skill vs persistence (\%) \\
+\midrule
+Raw LSTM              & causal              & $106.65\pm0.33$ & 1.6 \\
+Rolling VMD--LSTM     & causal              & $107.22\pm0.31$ & 1.1 \\
+LCSF--LSTM            & causal (one-sided)  & $107.19\pm0.76$ & 1.1 \\
+Full-series VMD--LSTM & leaky               & $61.61\pm3.10$  & --- \\
+LCSF--LSTM            & leaky (two-sided)   & $56.86\pm3.49$  & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Under the matched loss the causal models reach 106.65--107.22~kW and exceed
+persistence by 1.1--1.6\%, and the leakage-associated gap is unchanged
+(LSI-VMD $42.5\pm2.7$\%, LSI-LCSF $46.9\pm3.4$\%). Two conclusions follow: the
+main finding is not an artefact of the squared-error loss, whereas the position
+of causal models relative to persistence in MAE is. The absence of a
+decomposition gain also holds under the absolute-error loss --- the three causal
+models stay within about 0.6~kW of one another.
+
+\subsection{Robustness}
+\carry{draft v2 §6.3, §6.7--6.9, §6.12--6.13 and §7.1's equal-training-window
+control, condensed into one subsection with the detail in Appendix~B: eight
+seeds; CatBoost, GRU and causal TCN; rolling-window length; the April 2020 gap;
+the native 10-minute grid; and the control that retrains the raw LSTM on
+exactly the windows available to the decomposition arms.}
+
+% =====================================================================
+\section{Discussion}\label{sec:discussion}
+% =====================================================================
+\carry{draft v2 §7, rewritten around the cost axis rather than around the raw
+gap. Required changes: (i) lead with the operational consequence --- honest
+evaluation is affordable; (ii) state what this adds to
+Jeon et al.~\cite{jeon2026}, Zhang et al.~\cite{zhang2025} and
+Zhou et al.~\cite{zhou2024} rather than restating the measurement as new;
+(iii) consolidate the per-paragraph caveats into Section~\ref{sec:limits};
+(iv) keep the paragraph explaining that two-sided filtering transfers more
+future information than full-series VMD in these data, and connect it to the
+certificate profile, which now offers a mechanism for that difference.}
+
+\subsection{Limitations}\label{sec:limits}
+\carry{draft v2 §7.1 nearly intact --- it is thorough. Add: the certificate is
+a necessary condition over a probed set; $\lambda$ depends on the oracle
+specification and the VMD oracle is weak; the literature search is
+summary-level, and the search strings and date should be reported.}
+
+% =====================================================================
+\section{Conclusion}\label{sec:conclusion}
+% =====================================================================
+\carry{draft v2 §8, rewritten around the three instruments and the cost
+result rather than around the raw gap.}
+
+% =====================================================================
+\section*{CRediT authorship contribution statement}
+\carry{draft v2. Resolve the author-order inconsistency between the
+manuscript, \texttt{CITATION.cff} and the Zenodo record before submission.}
+
+\section*{Declaration of competing interest}
+The authors declare that they have no known competing financial interests or
+personal relationships that could have appeared to influence the work reported
+in this paper.
+
+\section*{Declaration of generative AI and AI-assisted technologies in the
+writing process}
+\carry{draft v2. Elsevier requires this statement and prescribes its wording;
+check the current form in the guide for authors.}
+
+\section*{Data availability}
+The SDWPF dataset is publicly available~\cite{zhou2024sdwpf}. The code that
+produces every number in this paper is available at
+\url{https://github.com/GokhanGULMEZ/ruzgar-sizinti-protokolu}.
+\textbf{Before submission:} the repository is currently private and this URL
+does not resolve for readers; it must be made public, the stored result tables
+must be added (the repository currently ships code only), and a persistent
+Zenodo DOI must be minted and cited here.
+
+% =====================================================================
+\appendix
+\section{Diebold--Mariano comparisons}
+\carry{draft v2 Tables A1--A3.}
+\section{All error metrics and robustness tables}
+\carry{draft v2 Tables B1--B6, plus Tables 3, 7, 9--12, 14--19 moved here from
+the main text.}
+\section{CatBoost feature importance}
+\carry{draft v2 Table C1 and Figures C1--C2.}
+
+% =====================================================================
+\begin{thebibliography}{99}
+% Peer-reviewed sources only, except where marked. Entries carrying
+% [VERIFY] need a field confirmed before submission.
+
+\bibitem{jeon2026}
+B.-K. Jeon, J. Heo, H. Joo, D. Kim, J. Kim,
+Data leakage from full-series signal decomposition inflates the reported
+accuracy of short-term energy forecasting hybrids: a leakage-controlled
+re-evaluation,
+Int. J. Energy Res. (2026).
+\url{https://doi.org/10.1155/er/4433079}
+
+\bibitem{zhang2025}
+D. Zhang, K. Jiang, C. Wu, Y. Peng, Z. Han, Y. Chen,
+Revisiting the efficacy of signal decomposition in AI-based time series
+prediction (2025).
+\url{https://doi.org/10.1117/12.3045386}
+
+\bibitem{zhou2024}
+P. Zhou, L. Shen, Y. Han, L. Mi, G. Xu,
+A short-term wind speed prediction method utilizing rolling decomposition and
+time-series extension to avoid information leakage,
+Energy Sources Part A 46 (2024).
+\url{https://doi.org/10.1080/15567036.2024.2318485}
+
+\bibitem{valdivieso2026}
+V. Valdivieso, E. López-Lao, A. García-Chica, A. Cama-Pinto,
+F. M. Arrabal-Campos,
+Leakage, not decomposition: auditing decompose-then-split hybrids for
+short-term load forecasting, SSRN preprint (2026).
+\url{https://doi.org/10.2139/ssrn.7422299}
+\textsf{[PREPRINT --- replace if a peer-reviewed version appears]}
+
+\bibitem{huo2024}
+J.-Y. Huo, et al.,
+Ultra-short-term wind power prediction model based on fixed scale dual mode
+decomposition and deep learning networks,
+Eng. Appl. Artif. Intell. 133 (2024). \textsf{[VERIFY article no./DOI]}
+
+\bibitem{pang2026}
+J. Pang, S. Dong,
+Stop unrealistic data preprocessing in wind speed forecasting: approaches and
+discussions on preventing future data leakage,
+Appl. Math. Model. (2026). \textsf{[VERIFY volume/DOI]}
+
+\bibitem{wangj2024}
+J. Wang, W. Yuan, S. Zhang, S. Cheng, L. Han,
+Implementing ultra-short-term wind power forecasting without information
+leakage through cascade decomposition and attention mechanism,
+Energy 312 (2024).
+
+\bibitem{xu2023}
+K. Xu, W. Wang,
+Limited information limits accuracy: whether EEMD improves crude oil spot price
+prediction?,
+Int. Rev. Financ. Anal. 87 (2023).
+\url{https://doi.org/10.1016/j.irfa.2023.102625}
+
+\bibitem{xuA2025}
+A. Xu, J. Chen, J. Li, Z. Chen, S. Xu, Y. Nie,
+Multivariate rolling decomposition hybrid learning paradigm for power load
+forecasting,
+Renew. Sustain. Energy Rev. 212 (2025).
+\url{https://doi.org/10.1016/j.rser.2025.115375}
+
+\bibitem{yu2021}
+L. Yu, Y. Ma, M. Ma,
+An effective rolling decomposition-ensemble model for gasoline consumption
+forecasting,
+Energy 222 (2021).
+\url{https://doi.org/10.1016/j.energy.2021.119869}
+
+\bibitem{yangD2024}
+D. Yang, M. Li, J. Guo, P. Du,
+An attention-based multi-input LSTM with sliding window-based two-stage
+decomposition for wind speed forecasting,
+Appl. Energy 375 (2024).
+\url{https://doi.org/10.1016/j.apenergy.2024.124057}
+
+\bibitem{wang2024}
+J. Wang, Y. Liu, Y. Li,
+A parallel differential learning ensemble framework based on enhanced feature
+extraction and anti-information leakage mechanism for ultra-short-term wind
+speed forecast,
+Appl. Energy 361 (2024) 122909.
+\url{https://doi.org/10.1016/j.apenergy.2024.122909}
+
+\bibitem{tan2025}
+J. Tan, H. Zhu, J. Zhang, H. Liu,
+Multi-stage wind speed prediction with CEEMDAN-SE-IDBO-LSTM based on rolling
+decomposition,
+Energy 338 (2025) 138741.
+\url{https://doi.org/10.1016/j.energy.2025.138741}
+
+\bibitem{chen2022}
+Y. Chen, S. S. Yu, S. N. Islam, C. P. Lim, S. M. Muyeen,
+Decomposition-based wind power forecasting models and their boundary issue: an
+in-depth review and comprehensive discussion on potential solutions,
+Energy Rep. 8 (2022) 8805--8820.
+\url{https://doi.org/10.1016/j.egyr.2022.07.005}
+
+\bibitem{yang2024}
+X. Yang, J. Li, X. Jiang,
+Research on information leakage in time series prediction based on empirical
+mode decomposition,
+Sci. Rep. 14 (2024) 28362.
+\url{https://doi.org/10.1038/s41598-024-80018-9}
+
+\bibitem{feng2026}
+W. Feng, R. Tao, J. Cartlidge, J. Zheng,
+VMDNet: temporal leakage-free variational mode decomposition for electricity
+demand forecasting, EUSIPCO 2026, in press.
+
+\bibitem{sesay2026}
+M. M. Sesay,
+Leakage-aware benchmarking of temporal data preparation for hourly energy
+forecasting,
+Energy Convers. Manag. X (2026).
+\url{https://doi.org/10.1016/j.ecmx.2026.101791}
+
+\bibitem{haq2026}
+M. A. U. Haq, K. Ali, I. Javed, M. Fahrioglu,
+Leakage safe machine learning for short term wind speed forecasting from SCADA,
+ISGTA 2025, Springer Proc. Phys.
+
+\bibitem{quilty2018}
+J. Quilty, J. Adamowski,
+Addressing the incorrect usage of wavelet-based hydrological and water
+resources forecasting models,
+J. Hydrol. (2018). \textsf{[VERIFY volume/pages/DOI]}
+
+\bibitem{maslova2015}
+I. Maslova, A. M. Ticlavilca, M. McKee,
+Adjusting wavelet-based multiresolution analysis boundary conditions for
+long-term streamflow forecasting,
+Hydrol. Process. (2015).
+\url{https://doi.org/10.1002/hyp.10564}
+
+\bibitem{kaufman2012}
+S. Kaufman, S. Rosset, C. Perlich, O. Stitelman,
+Leakage in data mining: formulation, detection, and avoidance,
+ACM Trans. Knowl. Discov. Data 6 (4) (2012).
+\url{https://doi.org/10.1145/2382577.2382579}
+
+\bibitem{kapoor2023}
+S. Kapoor, A. Narayanan,
+Leakage and the reproducibility crisis in machine-learning-based science,
+Patterns 4 (9) (2023) 100804.
+\url{https://doi.org/10.1016/j.patter.2023.100804}
+
+\bibitem{rosenblatt2024}
+M. Rosenblatt, et al.,
+Data leakage inflates prediction performance in connectome-based machine
+learning models,
+Nat. Commun. 15 (2024).
+\url{https://doi.org/10.1038/s41467-024-46150-w}
+
+\bibitem{hewamalage2023}
+H. Hewamalage, K. Ackermann, C. Bergmeir,
+Forecast evaluation for data scientists: common pitfalls and best practices,
+Data Min. Knowl. Discov. 37 (2) (2023) 788--832.
+\url{https://doi.org/10.1007/s10618-022-00894-5}
+
+\bibitem{nielsen1998}
+T. S. Nielsen, A. Joensen, H. Madsen, L. Landberg, G. Giebel,
+A new reference for wind power forecasting,
+Wind Energy 1 (1998) 29--34.
+
+\bibitem{madsen2005}
+H. Madsen, P. Pinson, G. Kariniotakis, H. Aa. Nielsen, T. S. Nielsen,
+Standardizing the performance evaluation of short-term wind power prediction
+models,
+Wind Eng. 29 (6) (2005) 475--489.
+\url{https://doi.org/10.1260/030952405776234599}
+
+\bibitem{messner2020}
+J. W. Messner, P. Pinson, J. Browell, M. B. Bjerregård, I. Schicker,
+Evaluation of wind power forecasts --- an up-to-date view,
+Wind Energy 23 (6) (2020) 1461--1481.
+\url{https://doi.org/10.1002/we.2497}
+
+\bibitem{sopena2020}
+J. M. González Sopeña, V. Pakrashi, B. Ghosh,
+An overview of performance evaluation metrics for short-term statistical wind
+power forecasting,
+Renew. Sustain. Energy Rev. 138 (2020) 110515.
+\url{https://doi.org/10.1016/j.rser.2020.110515}
+
+\bibitem{sopena2022}
+J. M. González Sopeña, V. Pakrashi, B. Ghosh,
+A benchmarking framework for performance evaluation of statistical wind power
+forecasting models,
+Sustain. Energy Technol. Assess. (2022).
+\url{https://doi.org/10.1016/j.seta.2023.103246}
+
+\bibitem{lee2022}
+J. C. Y. Lee, C. Draxl, L. K. Berg,
+Evaluating wind speed and power forecasts for wind energy applications using an
+open-source and systematic validation framework,
+Renew. Energy 200 (2022) 457--475.
+
+\bibitem{hong2020}
+T. Hong, P. Pinson, Y. Wang, R. Weron, D. Yang, H. Zareipour,
+Energy forecasting: a review and outlook,
+IEEE Open Access J. Power Energy 7 (2020) 376--388. \textsf{[VERIFY]}
+
+\bibitem{deignan2025}
+C. Deignan, J. M. González Sopeña, B. Ghosh, V. Pakrashi,
+Portability of short term wind power forecasting: investigating model
+calibration using wind power data from Ireland and UK,
+Sci. Rep. (2025).
+\url{https://doi.org/10.1038/s41598-025-08751-3}
+
+\bibitem{qian2019}
+Z. Qian, Y. Pei, H. Zareipour, N. Chen,
+A review and discussion of decomposition-based hybrid models for wind energy
+forecasting applications,
+Appl. Energy 235 (2019) 939--953.
+\url{https://doi.org/10.1016/j.apenergy.2018.10.080}
+
+\bibitem{dragomiretskiy2014}
+K. Dragomiretskiy, D. Zosso,
+Variational mode decomposition,
+IEEE Trans. Signal Process. 62 (3) (2014) 531--544.
+\url{https://doi.org/10.1109/TSP.2013.2288675}
+
+\bibitem{guo2021}
+Y. Guo, et al.,
+Generalized variational mode decomposition: a multiscale and fixed-frequency
+decomposition algorithm,
+IEEE Trans. Instrum. Meas. (2021). \textsf{[VERIFY volume/article no./DOI]}
+
+\bibitem{jia2026}
+H. Jia, J. Cao, Z. Liang, et al.,
+Short-time variational mode decomposition,
+Signal Process. 238 (2026) 110203.
+\url{https://doi.org/10.1016/j.sigpro.2025.110203}
+
+\bibitem{dan2023}
+D. Dan, et al.,
+Block-wise recursive sliding variational mode decomposition method and its
+application on online separating of bridge vehicle-induced strain monitoring
+signals,
+Mech. Syst. Signal Process. (2023). \textsf{[VERIFY volume/DOI; confirm
+causality from full text before use as a baseline]}
+
+\bibitem{wheatcroft2019}
+E. Wheatcroft,
+Interpreting the skill score form of forecast performance metrics,
+Int. J. Forecast. (2019). \textsf{[VERIFY volume/pages/DOI]}
+
+\bibitem{dm1995}
+F. X. Diebold, R. S. Mariano,
+Comparing predictive accuracy,
+J. Bus. Econ. Stat. 13 (3) (1995) 253--263.
+
+\bibitem{hln1997}
+D. Harvey, S. Leybourne, P. Newbold,
+Testing the equality of prediction mean squared errors,
+Int. J. Forecast. 13 (2) (1997) 281--291.
+
+\bibitem{holm1979}
+S. Holm,
+A simple sequentially rejective multiple test procedure,
+Scand. J. Stat. 6 (2) (1979) 65--70.
+
+\bibitem{kunsch1989}
+H. R. Künsch,
+The jackknife and the bootstrap for general stationary observations,
+Ann. Stat. 17 (3) (1989) 1217--1241.
+\url{https://doi.org/10.1214/aos/1176347265}
+
+\bibitem{zhou2024sdwpf}
+J. Zhou, X. Lu, Y. Xiao, et al.,
+SDWPF: a dataset for spatial dynamic wind power forecasting over a large
+turbine array,
+Sci. Data 11 (2024) 649.
+\url{https://doi.org/10.1038/s41597-024-03427-5}
+
+\bibitem{kelmarsh2022}
+C. Plumley,
+Kelmarsh wind farm data, Zenodo (2022).
+\url{https://doi.org/10.5281/zenodo.5841834}
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,663 @@
+% =====================================================================
+%  TESLİM PAKETİ v2 — RENEWABLE ENERGY · TÜRKÇE PARALEL
+%
+%  ESAS SÜRÜM İNGİLİZCE: manuscript/en/RE_manuscript_v2.tex
+%  Bu dosya Gökhan'ın takibi ve ortak çalışma içindir; içerik farkı
+%  olursa İngilizce geçerlidir. Dergiye İngilizce sürüm gider.
+%
+%  DURUM ETİKETLERİ
+%    [YENİ]    bu sürümde tam yazıldı
+%    [TAŞI]    metin taslak v2'de (.docx) var; oradan aktarılacak.
+%              Tablolardaki sayılar .docx'ten birebir çıkarıldı,
+%              elle yeniden yazılmadı.
+%    [HESAPLA] henüz yapılmamış bir koşu gerektiriyor
+% =====================================================================
+
+\documentclass[11pt,a4paper]{article}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{fontspec}
+\usepackage{polyglossia}
+\setmainlanguage{turkish}
+\setmainfont{TeX Gyre Termes}
+\usepackage{amsmath,amssymb}
+\usepackage{booktabs,array,longtable,graphicx}
+\usepackage[hidelinks]{hyperref}
+\usepackage{url}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt}
+
+\newcommand{\hesapla}[1]{\textbf{[HESAPLA: #1]}}
+\newcommand{\tasi}[1]{\textsf{\small [TAŞI -- #1]}}
+
+\begin{document}
+
+\begin{center}
+{\bfseries\large Türbin düzeyinde sızıntısız kısa vadeli rüzgâr gücü tahmini:
+düşük gecikmeli nedensel filtre bankası, eğitim gerektirmeyen bir nedensellik
+sertifikası ve dürüst değerlendirmenin bedeli\par}
+\vspace{6pt}
+Gökhan Gülmez\textsuperscript{1}, Kadir Sarıkaya\textsuperscript{2}\par
+{\small \textsuperscript{1}Bilgisayar Mühendisliği Bölümü,
+\textsuperscript{2}Endüstri Mühendisliği Bölümü,\\
+Mühendislik ve Mimarlık Fakültesi, Tokat Gaziosmanpaşa Üniversitesi, Tokat\par}
+\vspace{4pt}
+{\footnotesize\textsf{Hedef dergi: Renewable Energy (Elsevier, elsarticle).
+Yazar sırası gönderimden önce netleştirilecek.}}
+\end{center}
+
+% =====================================================================
+\section*{ÖNE ÇIKANLAR (Highlights)}
+% Elsevier kuralı: 3--5 madde, her biri boşluklar dahil en çok 85 karakter.
+% =====================================================================
+\begin{itemize}\itemsep1pt
+\item Tam seri VMD, altı SDWPF türbininde nedensel MAE'yi \%34--57 eksik gösteriyor
+\item Eğitim gerektirmeyen sertifika, nedensel ve sızdıran operatörleri ayırıyor
+\item Kilitli nedensel filtre bankası, kayan VMD'yi 1300 kat düşük gecikmeyle yakalıyor
+\item Nedensel protokolde ayrıştırma, ham SCADA girdilerine hiçbir şey eklemiyor
+\item Oracle-normalize oran, kabul edilen sızıntının ne kadarının gerçekleştiğini veriyor
+\end{itemize}
+
+% =====================================================================
+\section*{ÖZET}
+% [YENİ] — 248 kelimelik İngilizce özetin karşılığı. Renewable Energy
+% için operasyonel sonuç (konuşlandırılabilir doğruluk, güncelleme
+% maliyeti) öne alındı.
+% =====================================================================
+
+Ayrıştırma tabanlı hibritler kısa vadeli rüzgâr gücü tahmini literatürüne hâkim
+durumdadır, ancak çoğunlukla güç serisinin tamamı eğitim/test bölmesinden önce
+ayrıştırılarak değerlendirilmektedir; bu durumda bir test anını betimleyen
+öznitelikler o anın kendi geleceğini kodlar. Dürüst değerlendirme, ayrıştırmanın
+her tahmin anında yalnızca geçmiş veriden yeniden hesaplanmasını gerektirir ve
+bu hesaplama pahalıdır --- bu yüzden nadiren yapılır. Bu çalışma söz konusu
+yapaylığı nicelleştirmekte ve türbin düzeyi SCADA tahmini için maliyet engelini
+kaldırmaktadır. SDWPF çiftliğinin altı türbininde, 0,5--6 saatlik ufuklarda ve
+sekiz rastgele başlangıçta, tam seri varyasyonel mod ayrıştırması (VMD) aynı
+nedensel boru hattının ortalama mutlak hatasını \%34--57 eksik göstermektedir;
+fark Holm düzeltmeli Diebold--Mariano testleriyle her türbinde anlamlıdır ve
+tahminci mutlak hata kaybıyla eğitildiğinde de değişmemektedir. Bir ileri-bakış
+doz--tepki deneyi farkı genlik, faz veya sınır etkilerine değil gelecek
+bilgisine atfetmektedir. İki araç tanıtıyoruz: operatörü gelecek bozmaları ve
+önek kesmesiyle yoklayan, geçti/kaldı hükmü yerine bir sızıntı erişimi ve
+kazancı raporlayan, eğitim gerektirmeyen bir nedensellik sertifikası; ve bir
+operatörün kabul ettiği sızıntının ne kadarını fiilen gerçekleştirdiğini ifade
+eden oracle-normalize bir oran. Ardından, bantları eğitim döneminden kilitlenen
+nedensel bir spektral filtre bankasının, kayan VMD'den istatistiksel olarak
+ayırt edilemeyen nedensel doğruluğa yaklaşık 1300 kat düşük güncelleme
+gecikmesiyle ulaştığını ve böylece sızıntısız değerlendirmeyi çiftlik ölçeğinde
+uygulanabilir kıldığını gösteriyoruz. Nedensel protokol altında ayrıştırma, ham
+SCADA girdilerine göre tutarlı bir doğruluk kazancı sağlamamaktadır.
+
+\textbf{Anahtar kelimeler:} rüzgâr gücü tahmini; SCADA; zamansal veri sızıntısı;
+varyasyonel mod ayrıştırması; nedensel ön işleme; değerlendirme protokolü;
+Diebold--Mariano testi.
+
+% =====================================================================
+\section{Giriş}
+% =====================================================================
+% [YENİ]
+
+\subsection{Operasyonel motivasyon}
+
+Kısa vadeli rüzgâr gücü tahminleri birim taahhüdünü, yedek tedarikini, gün içi
+ticareti ve kısıtlama kararlarını yönlendirir; dolayısıyla bir tahmincinin
+raporladığı doğruluk değeri akademik bir nicelik değildir, işletmecinin yedek
+boyutlandırdığı temeldir. Konuşlandırmada yeniden üretilemeyen bir değer yedeği
+yanlış boyutlandırır ve hata tek yönlüdür: olduğundan iyi görünen doğruluk,
+olduğundan küçük yedeğe yol açar.
+
+Yayımlanmış kısa vadeli rüzgâr gücü tahmincileri arasında ayrıştırma tabanlı
+hibritler en yaygın tasarımdır: gözlenen güç serisi frekans bileşenlerine
+ayrılır ve öğrenici bu bileşenler üzerinde eğitilir. Qian ve ark.~[1] bu aileyi
+derlemiştir. Tasarım, nadiren belirtilen bir değerlendirme seçimine dayanır:
+ayrıştırma \emph{ne zaman} uydurulmaktadır? VMD~[2] ve ampirik mod ailesi
+küresel, nedensel olmayan dönüşümlerdir. Biri test dönemini içeren bir seriye
+bir kez uydurulursa, $t$ anındaki bileşen değeri $t$ sonrasındaki gözlemlerin
+fonksiyonu olur. Hedef modele hiç gösterilmez, ama hedef hakkındaki bilgi
+gösterilir.
+
+\subsection{Dürüst protokol neden benimsenmiyor}
+
+Çözüm bilinmektedir: ayrıştırmayı her tahmin anında yalnızca geçmiş veriden
+yeniden hesaplamak. Chen ve ark.~[3] sorunu ``sınır sorunu'' olarak kataloglar
+ve çözümleri algoritma, örnekleme ve yineleme tabanlı diye sınıflar. Engel
+maliyettir. Kayan yeniden-ayrıştırma her tahmin anında yeni bir varyasyonel
+optimizasyon gerektirir; Jeon ve ark.~[4] bunun ``gerçek bir hesaplama maliyeti''
+taşıdığını ve bu maliyetin ``konuşlandırmayı yansıtan bir değerlendirmenin
+bedeli'' olduğunu açıkça yazmaktadır. SDWPF büyüklüğünde bir çiftlikte
+(134 türbin) bu bedel karşılanamaz ve literatür bedeli ödememe yoluna gitmiştir.
+
+Bu makale maliyeti bir çekince olarak değil bir mühendislik problemi olarak ele
+alır. Temel pratik iddiası, bedelin nedensel doğrulukta ölçülebilir bir kayıp
+olmaksızın yaklaşık üç mertebe düşürülebileceği ve böylece dürüst protokolün
+çiftlik ölçeğinde kullanılabilir hâle geldiğidir.
+
+\subsection{Bu çalışmanın konumu}
+
+Yapaylığı ilk gözlemleyen ya da ilk ölçen olduğumuzu iddia etmiyoruz ve okurun
+neyin zaten yerleşik olduğunu bilmesi gerekir. Kayan ya da örnek bazlı
+ayrıştırma benzin tüketimi~[5], ham petrol~[6], elektrik yükü~[7,8], rüzgâr
+hızı~[9--13] ve çok kısa vadeli rüzgâr gücü~[14] için önerilmiştir.
+Nicelleştirilmiş karşılaştırmalar da vardır: Xu ve Wang~[6] aynı tahmincilerle
+kayan ve tüm seri EEMD'yi karşılaştırır; Zhang ve ark.~[15] altı veri kümesi ve
+üç ayrıştırmada anormal hata düşüşünün ağırlıkla yüksek frekanslı bileşenlerce
+taşındığını raporlar; Zhou ve ark.~[13] rüzgâr hızı tahmininde şişmeyi mutlak
+hatada \%40--55, kare hatada \%65--85 olarak ölçer; Jeon ve ark.~[4] Alman yük,
+güneş ve rüzgâr üretimi ile bir kıyas serisinde tam seri protokolün aynı
+nedensel boru hattının hatasını \%30--93 eksik gösterdiğini bildirir ve
+yapaylığı geçmiş uzunluğuna değil ileri-bakışa atfeder.
+Valdivieso ve ark.~[16] yük için benzer bir büyüklük raporlar.
+
+Bu külliyatın açık bıraktığı üç şey vardır ve bu makalenin katkısı odur.
+
+\emph{Birincisi, çözümün maliyeti adlandırılmış ama ele alınmamıştır.} Yukarıdaki
+çalışmaların hiçbiri nedensel ayrıştırmanın güncelleme başına gecikmesini ölçmez
+ya da düşürmez. Bölüm~4.1 kilitli nedensel spektral filtre bankasını tanımlar,
+Bölüm~6.5 gecikmesini kayan VMD'ye karşı aynı seride ölçer.
+
+\emph{İkincisi, bir operatörün nedenselliği için uygulanabilir bir test yoktur.}
+Jeon ve ark.~[4] beş maddelik bir kontrol listesi, Kapoor ve Narayanan~[17]
+raporlama formları sunar; hiçbiri belirli bir operatöre uygulanıp sızdırıp
+sızdırmadığına karar veremez. Bölüm~5.4 uygulanabilen ve hüküm yerine profil
+raporlayan bir sertifika tanımlar.
+
+\emph{Üçüncüsü, büyüklük yalnızca ham hata farkı olarak raporlanmıştır.} Ham fark
+nedensel hataya bölünür; nedensel boru hattı zayıfken büyür ve farklı tavanlara
+sahip operatörler kıyaslanamaz. Bölüm~5.3 farkı ulaşılabilir, operatöre göreli
+bir oracle'a çapalar.
+
+Kurulum ayrıca bu dergi açısından önemli bir biçimde farklıdır: yukarıdaki tüm
+ölçümler saatlik çözünürlükte toplam ya da ulusal serilerdedir; oysa yedek ve
+kısıtlama kararları 10--30 dakikalık türbin düzeyi SCADA üzerinde alınır. Türbin
+düzeyi gücün uzamsal düzleştirmesi yoktur, oynaklığı çok daha yüksektir, pitch ve
+kısıtlama etkileri taşır. Bu nedenle ölçümü türbin düzeyinde, tek bir nedensel
+protokol altında, türbinler, ufuklar, rastgele başlangıçlar ve tahminci aileleri
+boyunca raporluyoruz.
+
+\subsection{Katkılar}
+
+\begin{enumerate}
+\item Bantları yalnız eğitim döneminden öğrenilen, kayan VMD'den istatistiksel
+olarak ayırt edilemeyen nedensel doğruluğa yaklaşık 1300 kat düşük güncelleme
+gecikmesiyle ulaşan \textbf{kilitli nedensel spektral filtre bankası (LCSF)}
+(Bölüm~4.1 ve~6.5). Daha doğru bir tahminci olarak sunulmamaktadır; değeri
+dürüst protokolü uygulanabilir kılmasıdır.
+\item \textbf{Eğitim gerektirmeyen nedensellik sertifikası}: gelecek-bozma
+duyarlılık profili $D(\tau;\delta)$ ve önek değişmezliği testi; sızıntı
+\emph{erişimi} ve \emph{kazancı} raporlar. Sızdıran operatörleri birbirinden
+ayırır --- tam seri VMD'nin duyarlılığı gecikmeyle azalmazken iki yönlü
+süzmeninki azalır (Bölüm~5.4 ve~6.3).
+\item Ulaşılabilir, operatöre göreli bir oracle'a çapalanmış
+\textbf{oracle-normalize sızıntı oranı} $\lambda$; iki sızdıran operatörü ham
+farkın tersine sıralar (Bölüm~5.3 ve~6.4).
+\item Altı türbin, altı ufuk, sekiz tohum ve dört tahminci ailesi boyunca
+Diebold--Mariano testiyle \textbf{türbin düzeyi ölçüm}, yerel 10 dakikalık
+ızgara dahil.
+\item \textbf{Olumsuz sonuçların tam raporlanması}: nedensel protokolde
+ayrıştırma ham SCADA girdilerine göre tutarlı kazanç sağlamaz ve nedensel
+modellerin persistence karşısındaki konumu eğitim kaybına bağlıdır.
+\end{enumerate}
+
+% =====================================================================
+\section{İlgili çalışmalar}
+% =====================================================================
+\tasi{İngilizce sürüm Bölüm 2 ile aynı yapı. En yakın öncül iş (Jeon ve ark.,
+Zhang ve ark., Zhou ve ark., Valdivieso ve ark.) başa alınacak; ardından
+sızıntı-önleyici tasarımlar, rüzgâr gücü değerlendirme pratiği ve nedensel/
+çevrimiçi ayrıştırma. Konumlandırma tablosunun son sütunu
+\emph{sunulan operasyonel araç} olacak --- ayrımın yapıldığı yer burası.}
+
+% =====================================================================
+\section{Veri ve protokol}
+% =====================================================================
+\tasi{Taslak v2 §3.1--3.4 tamamı. SDWPF, 1500 kW anma gücü, örnekleme aralığı
+bulgusu ve 30 dk ortak ızgara; pencereleme, ufuklar; 37 öznitelik; kronolojik
+\%70/15/15 bölme, 12 adım purge, yalnız eğitimden ölçekleme.}
+\hesapla{rolling-origin değerlendirme ya da en azından aylık alt-dönem sonuçları}
+\hesapla{ikinci çiftlik: Kelmarsh (6 türbin, 10 dk SCADA)}
+
+% =====================================================================
+\section{Ayrıştırma operatörleri}
+% =====================================================================
+\tasi{Taslak v2 §4.1--4.2 ve §4.4: tam seri VMD (sızdıran), kayan VMD
+(nedensel) ve tahminci tanımları.}
+
+\subsection{Kilitli nedensel spektral filtre bankası}
+\tasi{Taslak v2 §4.3.} VMD yalnız eğitim kesitine uygulanarak $K$ merkez
+frekansı elde edilir; ardışık merkez frekansların geometrik ortalamaları bant
+sınırı olur ve üçüncü dereceden Butterworth filtrelerinden oluşan bir banka
+(bir alçak geçiren, iki bant geçiren, bir yüksek geçiren) kesin olarak ileri
+yönde uygulanır; başlangıç durumu ilk gözlemden türetilir. Aynı bantların sıfır
+fazlı uygulanması, nedensel olandan yalnızca süzme yönüyle ayrılan ve bu nedenle
+kontrol operatörü işlevi gören sızdıran karşılığı verir.
+
+\textbf{Gerekli eklemeler.} (i) Yapıyı VMD'nin filtre bankası okumasına~[2]
+dayandır ve önsel merkez frekanslarıyla genelleştirilmiş VMD'den~[18]
+farklandır. (ii) LCSF'nin test anında VMD'nin matematiksel eşdeğeri olarak
+sunulmadığını belirt. (iii) İkinci dereceden bölüm kontrolünü raporla (taslak v2
+§6.17): iki uygulama arasındaki en büyük fark bileşen başına en çok
+$8\times10^{-6}$ kW, yani filtrelerin sayısal biçimi sonuçları etkilemiyor.
+
+% =====================================================================
+\section{Değerlendirme çerçevesi}
+% =====================================================================
+% [YENİ] — makalenin metodolojik çekirdeği
+
+\subsection{Hata ölçütleri ve anlamlılık}
+\tasi{Taslak v2 §5: MAE, RMSE, nMAE, nRMSE, $R^2$; referansa göre skill;
+Bartlett uzun dönem varyansı ve Harvey--Leybourne--Newbold küçük örneklem
+düzeltmesiyle Diebold--Mariano; Holm düzeltmesi; blok bootstrap.}
+
+\subsection{Referans modeller}
+\textsf{[YENİ]} Yalnız persistence topluluk referansı değildir. Nielsen ve
+ark.~[19] MSE-optimal birleşimini benimsiyoruz:
+\begin{equation}
+\hat p(t+k) = a_k\,p_t + (1-a_k)\,\bar p,
+\qquad
+a_k = \frac{\frac{1}{N}\sum_t \tilde p_t \tilde p_{t+k}}
+            {\frac{1}{N}\sum_t \tilde p_t^{\,2}},
+\qquad \tilde p_t = p_t-\bar p,
+\label{eq:nielsen}
+\end{equation}
+burada $k$ gecikmeli otokorelasyon $a_k$ ve ortalama $\bar p$ yalnız eğitim
+döneminden ve o yazarların önerdiği gibi türbin bazında kestirilir.
+$a_k\to1$'de persistence'a, $a_k\to0$'da climatology'ye indirgenir. Birleşim
+kare hatayı minimize ettiği için MAE'si persistence'ınkini aşabilir; bu nedenle
+iki ölçüt de raporlanır.
+
+\subsection{Sızıntı oranları}
+Bir operatörün eşleştirilmiş nedensel ve sızdıran sürümleri için ham fark
+\begin{equation}
+\mathrm{LSI} =
+\frac{E_{\mathrm{nedensel}}-E_{\mathrm{sızdıran}}}{E_{\mathrm{nedensel}}}\times 100
+\end{equation}
+nedensel hataya böler; nedensel boru hattı zayıfken --- ki bir sızıntı
+çalışmasının bulunması muhtemel rejim budur --- şişer ve farklı tavanlı
+operatörler arasında kıyaslanamaz.
+\textsf{[YENİ]} Bu nedenle oracle-normalize bir oran da raporluyoruz.
+$E_{\mathrm{oracle}}$, \emph{aynı} operatörün hedefi içeren bir pencerede
+uygulanmış hâlinin hatası olsun; yani bu operatörün cevabı görmesine izin
+verilseydi yapabileceğinin en iyisi. O zaman
+\begin{equation}
+\lambda =
+\frac{E_{\mathrm{nedensel}}-E_{\mathrm{sızdıran}}}
+     {E_{\mathrm{nedensel}}-E_{\mathrm{oracle}}}
+\label{eq:lambda}
+\end{equation}
+şunu yanıtlar: bu operatörün kabul ettiği sızıntının ne kadarını denetlenen
+protokol gerçekleştiriyor? Oracle çapalama tahmin doğrulamasında yerleşiktir~[20];
+mükemmel çapanın çoğu zaman ulaşılamaz olduğu uyarısıyla birlikte.
+Denk.~\eqref{eq:lambda} bunun yerine ulaşılabilir, operatöre göreli bir oracle
+kullanır. Her raporlanan değerle birlikte iki sınır belirtilmelidir:
+$E_{\mathrm{nedensel}}\le E_{\mathrm{oracle}}$ ise $\lambda$ tanımsızdır; ve
+kayan VMD'nin ileri-bakış eğrisi monoton olmadığından $E_{\mathrm{oracle}}$
+kesin bir üst sınır değil, tanımlanmış bir referans noktasıdır. $\lambda$ ham
+farkı tamamlar, yerine geçmez.
+
+\subsection{Nedensellik sertifikası}
+\textsf{[YENİ]} $\Phi$, $x$ serisini $K$ bileşene eşlesin;
+$\Phi(x)_{t,k}$ $t$ anındaki $k$. bileşen ve
+$\mathcal F_t=\sigma(x_s: s\le t)$ olsun. Operatör, her $t$ ve $k$ için
+$\Phi(x)_{t,k}$ $\mathcal F_t$-ölçülebilir ise \emph{nedenseldir}.
+
+Nedensellik hesaplamanın bir özelliğidir ve verinin erişilebilirliği veri
+\emph{değerlerine} bağlı olmayan boru hatları için statik analizle karara
+bağlanabilir. Tam seri VMD, kayan VMD ve EMD ailesi bu türden değildir: her biri
+$t$ anındaki çıktısı tüm girdi penceresinin değerlerine bağlı olan yinelemeli
+bir optimizasyondur. Bu sınıf için deneysel ve operatörden bağımsız bir prob
+elimizdeki araçtır ve neyi ortaya koyduğunu belirtiyoruz: denenen küme üzerinde
+gerekli bir koşul, asla sızıntının yokluğu değil.
+
+\paragraph{Test 1: gelecek-bozma profili.}
+Bozma anı $t_0$, genlik $\delta$ ve gecikme $\tau\ge0$ için
+\begin{equation}
+D_\Phi(\tau;\delta)=
+\max_{t\le t_0-\tau}\;\max_k\;
+\bigl|\Phi(x)_{t,k}-\Phi\!\left(x\oplus\delta\mathbf 1_{\{s>t_0\}}\right)_{t,k}\bigr| .
+\end{equation}
+$\Phi$ nedensel ise $D_\Phi\equiv0$'dır. Profilin raporlanması, $D_\Phi>0$ olan
+en büyük denenen $\tau$ olan \emph{sızıntı erişimini} ve $D_\Phi$'nin $\delta$
+ile büyümesi olan \emph{sızıntı kazancını} verir.
+
+\paragraph{Test 2: önek değişmezliği.}
+Bağımsız olarak, rastgele kesim noktalarında
+$\Phi(x_{1:t})_{t,k}=\Phi(x_{1:N})_{t,k}$ aranır. Test~1 geleceğin bozulmasına
+duyarlılığı, Test~2 geleceğin varlığına bağımlılığı yoklar.
+
+\paragraph{Ortaya koymadıkları.} Geçmek nedenselliği kanıtlamaz; denenen anlar,
+gecikmeler ve genliklerde bağımlılık saptanmadığını ortaya koyar ve bu
+parametrelerle birlikte raporlanmalıdır.
+
+\subsection{Ağırlıklı sızıntı maruziyeti ve dereceli ölçüt}
+% [YENİ — HESAPLA]
+
+Denk.~(5) bileşenler üzerinde maksimum alır; yani yalnızca operatörün sızdırıp
+sızdırmadığını yanıtlar. Pratikte iki soru daha önemlidir: sızıntıyı
+\emph{hangi} bileşenler taşıyor ve tahminci onları fiilen kullanıyor mu?
+Birincisi çalışılmıştır: Zhang ve ark.~[15] ampirik mod fonksiyonlarını
+tahminciye teker teker ekleyip yapaylığın ağırlıkla yüksek frekanslı
+bileşenlerce taşındığını raporlar. Ancak o ölçü iki ayrı niceliği birleştirir ---
+operatörün bir bileşende ne kadar gelecek açığa çıkardığı ile modelin bunu ne
+kadar kullandığı --- çünkü tahmin hatasındaki değişimden okunur. Sertifika
+bunları ayırır, zira $D_k$ yalnızca $\Phi$'nin bir özelliğidir.
+
+Denk.~(5)'i bileşen bazında çözelim,
+\begin{equation}
+D_{\Phi,k}(\tau;\delta)=
+\max_{t\le t_0-\tau}
+\bigl|\Phi(x)_{t,k}-\Phi\!\left(x\oplus\delta\mathbf 1_{\{s>t_0\}}\right)_{t,k}\bigr| ,
+\label{eq:profilek}
+\end{equation}
+ve $w_k$ tahmincinin $k$. bileşene dayanma payı,
+$\hat w_k = w_k/\sum_j w_j$ normalize hâli olsun (Ek C'de zaten hesaplanmış üç
+ölçütü de raporluyoruz: öngörü-değeri-değişimi, permütasyon $\Delta$MAE ve
+ortalama mutlak SHAP). Her bileşeni kendi standart sapması $\sigma_k$ ile
+ölçekleyerek toplamı boyutsuzlaştırırsak, \emph{ağırlıklı sızıntı maruziyeti}
+\begin{equation}
+\Lambda(\tau;\delta)=\sum_{k=1}^{K}\hat w_k\,\frac{D_{\Phi,k}(\tau;\delta)}{\sigma_k}.
+\label{eq:exposure}
+\end{equation}
+$\Lambda=0$ ancak ve ancak operatör nedenselse ya da model sızdıran her bileşeni
+görmezden geliyorsa sağlanır. $\{\hat w_k D_{\Phi,k}/\sigma_k\}$ kümesinin
+yoğunlaşması, sızıntının tek bir bileşende mi toplandığını yoksa bankaya mı
+dağıldığını gösterir.
+
+\paragraph{Dereceli kabul ölçütü.} Yukarıdaki hâliyle sertifika ikilidir:
+operatör ancak $D$ tam olarak sıfırsa geçer. Bu kırılgandır; ihmal edilebilir
+düzeyde sızdıran ve hiç kullanılmayan bir bileşen, yapaylığın tamamını taşıyan
+bir bileşenle aynı muameleyi görür. Bunun yerine
+\begin{equation}
+\Lambda(0;\delta_{\mathrm{ref}})\le c
+\label{eq:criterion}
+\end{equation}
+koşulunu öneriyoruz ve $c$'yi uygulayıcının zaten ölçebildiği bir niceliğe
+kalibre ediyoruz: $c$, ima ettiği hata şişmesi aynı tahmincinin rastgele
+başlangıçlar arası standart sapmasının altına düşen maruziyet düzeyidir (bu
+veride 2,4--6,6 kW; sekiz tohum tablosu ve taslak v2 §6.3). Ölçüt şöyle okunur:
+\emph{bir boru hattı, hâlâ kabul ettiği sızıntı hatayı yeniden eğitmekten daha
+az oynattığında kabul edilebilir.} Hem $\Lambda$ hem ham profil raporlanır; okur
+istediğini uygulayabilir.
+
+\paragraph{İddianın kapsamı.} $w_k$ modele bağlıdır, tamsayı değildir ve yeniden
+eğitimler arasında sabit değildir; dolayısıyla Denk.~\eqref{eq:criterion} bir
+ağırlıklı \emph{kabul ölçütüdür}, ağırlıklı $k$-out-of-$n$ güvenilirlik modeli
+değildir ve böyle sunulmaktadır. $\Lambda$ simgesi, Bölüm~5.3'teki
+oracle-normalize oran $\lambda$'dan ayrıdır.
+
+\hesapla{(i) \texttt{leakage/certificate.py::pertürbasyon\_profili} bileşen
+bazında çözülecek --- şu an $k$ üzerinde indirgeme yapıyor --- ve betik 29
+yeniden koşulacak; maliyeti tam seri VMD belirliyor, varsayılan prob ızgarasıyla
+yaklaşık 1--2 saat. (ii) $\hat w_k$ mevcut Ek C önem tablosundan alınacak;
+yeniden eğitim gerekmiyor. (iii) $c$, hâlihazırda raporlanan sekiz tohumlu MAE
+standart sapmalarına kalibre edilecek.}
+
+% =====================================================================
+\section{Bulgular}
+% =====================================================================
+% Tüm tablolar taslak v2'den birebir aktarıldı.
+
+\subsection{Sızıntıyla ilişkili farkın büyüklüğü}
+\tasi{Taslak v2 §6.1--6.2 metni.}
+
+\begin{table}[htbp]\centering
+\caption{Türbin 57, çok ufuklu MAE (kW) ve LSI (tohum 42).}
+\footnotesize
+\begin{tabular}{lrrrrrr}
+\toprule
+Ufuk (sa) & Persistence & Ham LSTM & CatBoost Direct &
+Kayan VMD (ned.) & Tam seri VMD (sızd.) & LSI-VMD (\%) \\
+\midrule
+0,5 &  77,80 &  90,04 &  78,78 &  86,76 & 53,29 & 38,6 \\
+1   & 108,42 & 114,55 & 106,12 & 116,11 & 64,71 & 44,3 \\
+2   & 153,78 & 164,28 & 143,35 & 158,98 & 67,73 & 57,4 \\
+3   & 187,89 & 211,91 & 168,05 & 191,00 & 73,43 & 61,6 \\
+4   & 214,98 & 212,26 & 187,36 & 215,86 & 96,81 & 55,2 \\
+6   & 255,53 & 240,69 & 215,69 & 247,92 & 88,55 & 64,3 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering
+\caption{Bir saatlik ufuk, altı türbin, tohum 42. MAE kW; parantez içinde
+persistence'a göre Skill (\%). DM negatifse sızdıran model daha düşük hatalı;
+tüm $p<10^{-15}$.}
+\scriptsize
+\begin{tabular}{lrrrrrrrrrr}
+\toprule
+& \multicolumn{5}{c}{Nedensel} & \multicolumn{2}{c}{Sızdıran} &
+\multicolumn{2}{c}{LSI (\%)} & \\
+\cmidrule(lr){2-6}\cmidrule(lr){7-8}\cmidrule(lr){9-10}
+Türbin & Pers. & Ham LSTM & CatBoost & Kayan VMD & LCSF &
+Tam VMD & LCSF iki y. & VMD & LCSF & DM (VMD) \\
+\midrule
+57  & 108,42 & 114,55 (-5,7)  & 106,12 (2,1)  & 116,11 (-7,1)  & 116,29 (-7,3)  & 64,71 (40,3) & 57,34 (47,1) & 44,3 & 50,7 & $-26,56$ \\
+10  & 110,58 & 131,73 (-19,1) & 116,72 (-5,6) & 128,17 (-15,9) & 127,71 (-15,5) & 69,58 (37,1) & 55,57 (49,7) & 45,7 & 56,5 & $-27,82$ \\
+83  &  95,85 & 114,43 (-19,4) &  98,84 (-3,1) & 111,64 (-16,5) & 111,34 (-16,2) & 61,67 (35,7) & 57,89 (39,6) & 44,8 & 48,0 & $-24,77$ \\
+120 &  95,08 &  97,32 (-2,4)  &  93,37 (1,8)  &  95,59 (-0,5)  &  96,83 (-1,8)  & 63,42 (33,3) & 57,29 (39,7) & 33,7 & 40,8 & $-18,49$ \\
+61  & 107,31 & 117,78 (-9,8)  & 107,11 (0,2)  & 119,48 (-11,3) & 119,26 (-11,1) & 70,15 (34,6) & 56,01 (47,8) & 41,3 & 53,0 & $-26,12$ \\
+84  & 103,19 & 109,12 (-5,7)  & 102,40 (0,8)  & 116,34 (-12,7) & 110,15 (-6,7)  & 72,61 (29,6) & 55,03 (46,7) & 37,6 & 50,0 & $-24,66$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[htbp]\centering
+\caption{LSI (\%), sekiz tohum (42--49) ortalama $\pm$ standart sapma.
+Türbinler tek çiftliktedir ve bağımsız tekrar sayılmaz.}
+\footnotesize
+\begin{tabular}{lrr}
+\toprule
+Türbin & LSI-VMD & LSI-LCSF \\
+\midrule
+57  & $39,9\pm4,4$ & $48,7\pm5,0$ \\
+10  & $45,1\pm3,1$ & $53,1\pm3,8$ \\
+83  & $45,2\pm2,9$ & $52,0\pm4,5$ \\
+120 & $37,7\pm5,2$ & $47,0\pm5,2$ \\
+61  & $42,8\pm5,7$ & $50,4\pm4,9$ \\
+84  & $40,7\pm4,7$ & $50,3\pm2,9$ \\
+\midrule
+Türbinler arası ort. & $41,9\pm3,0$ & $50,3\pm2,2$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mekanizma: ileri-bakış doz--tepkisi}
+\tasi{Taslak v2 §6.10--6.11, sıkıştırılmış.}
+
+\begin{table}[htbp]\centering
+\caption{Türbin 57, 1 sa, üç tohum: bileşene tanınan ileri-bakış miktarı $m$'ye
+göre MAE (tohum ortalaması) ve LSI-LCSF (ortalama $\pm$ std). $m\ge H=2$
+koşulları hedefi içerir; gerçekçi kullanım değil, üst sınır stres testidir.}
+\footnotesize
+\begin{tabular}{lrrr}
+\toprule
+İleri-bakış $m$ (adım) & Gelecek (dk) & MAE (kW) & LSI-LCSF (\%) \\
+\midrule
+Nedensel LCSF (tek yönlü, referans) & 0 & 115,94 & --- \\
+0 (sıfır fazlı, gelecek yok)        & 0 & 113,27 & $2,3\pm1,4$ \\
+1                                   & 30 & 85,86 & $26,0\pm1,8$ \\
+2 ($=H$, hedef bileşende)           & 60 & 11,05 & $90,5\pm1,0$ \\
+4                                   & 120 & 29,10 & $74,9\pm0,6$ \\
+8                                   & 240 & 59,43 & $48,7\pm6,3$ \\
+16                                  & 480 & 63,50 & $45,2\pm2,7$ \\
+48                                  & 1440 & 61,60 & $46,8\pm5,1$ \\
+$\infty$ (tam seri, iki yönlü)      & --- & 61,73 & $46,7\pm7,7$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Sıfır fazlı ama geleceğe bakmayan süzme farkı yalnızca \%2,3'e çıkarıyor; yani
+iki yönlü ile tek yönlü süzme arasındaki fark genlik veya faz yapaylığı değil.
+Bir adım ileri-bakış \%26,0'a, hedefin dahil edilmesi \%90,5'e çıkarıyor. Hiç
+gelecek tanımadan bileşeni pencere sonundan uzaklaştıran geriye kaydırılmış
+nedensel kontrol MAE'yi yaklaşık \%1 değiştiriyor (taslak v2 §6.11), yani sınır
+etkisi bu veride küçük.
+
+\subsection{Nedensellik sertifikası}
+\tasi{Taslak v2 §6.18 metni.} Prob kümesi: $\tau\in\{0,1,2,4,8,16,32\}$ adım,
+$\delta\in\{50,100,200,400\}$ kW, 20 bozma anı (tam seri VMD için 5) ve
+50 rastgele kesim noktası (tam seri VMD için 10).
+
+\begin{table}[htbp]\centering
+\caption{Nedensellik sertifikası, Türbin 57. $D(\tau;\delta=200$ kW$)$ kW
+cinsinden. Erişim, $D>0$ olan en büyük denenen $\tau$; 32 adım ızgara sınırıdır.}
+\footnotesize
+\begin{tabular}{lrrrlrl}
+\toprule
+Operatör & $D(\tau{=}0)$ & $D(\tau{=}8)$ & $D(\tau{=}32)$ & Erişim &
+Önek maks. fark (kW) & Önek ihlali \\
+\midrule
+LCSF, nedensel            &   0,00 &   0,00 &  0,00 & yok       & 0 & 0 / 50 \\
+Kayan VMD, nedensel       &   0,00 &   0,00 &  0,00 & yok       & 0 & 0 / 50 \\
+LCSF, iki yönlü (sızd.)   &  87,21 &  55,39 & 10,17 & $\ge32$   & 1.060 & 50 / 50 \\
+Tam seri VMD (sızd.)      & 113,49 & 235,44 & 96,57 & $\ge32$   & 386 & 10 / 10 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Her iki nedensel operatör de denenen her $\tau$ ve $\delta$'da tam olarak sıfır
+veriyor ve önek ihlali göstermiyor. İki sızdıran operatör niteliksel olarak
+ayrışıyor: iki yönlü süzmenin duyarlılığı, sonlu destekli bir operatörden
+beklendiği gibi gecikmeyle azalıyor; tam seri VMD'ninki azalmıyor. Bu, serinin
+herhangi bir yerindeki değişiklikte tüm ayrıştırmayı yeniden dağıtan küresel bir
+varyasyonel optimizasyonla tutarlıdır. Profil böylece yalnızca sızıntının
+varlığını değil \emph{türünü} de ayırt ediyor.
+
+\subsection{Oracle-normalize oran}
+\tasi{Taslak v2 §6.14 metni, çekinceleriyle birlikte.}
+
+\begin{table}[htbp]\centering
+\caption{Türbin 57, 1 sa, üç tohum: hata ölçeğinin dört çapası ve $\lambda$.
+$E_{\mathrm{oracle}}$, $m=H=2$ hedef-içeren koşuldur. Hatalar kW.}
+\footnotesize
+\begin{tabular}{lrrrrr}
+\toprule
+Operatör & $E_{\mathrm{nedensel}}$ & $E_{\mathrm{sızdıran}}$ &
+$E_{\mathrm{oracle}}$ & LSI (\%) & $\lambda$ \\
+\midrule
+İki yönlü LCSF  & 115,94 & 61,73 & 11,05 & 46,7 & 0,52 \\
+Tam seri VMD    & 116,78 & 68,66 & 64,64 & 41,1 & 0,92 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+İki ölçüt operatörleri ters sıralıyor: ham fark iki yönlü LCSF'de daha büyükken,
+$\lambda$ tam seri VMD'nin operatörünün kabul ettiği sızıntının neredeyse
+tamamını, iki yönlü süzmenin ise yaklaşık yarısını gerçekleştirdiğini gösteriyor.
+Ham fark operatörleri farklı tavanlara karşı kıyaslıyor. Bu tek türbin, tek ufuk
+ve üç tohumdur; tam seri VMD'nin oracle'ı zayıftır (68,66'ya karşı 64,64 kW),
+dolayısıyla $\lambda$ bu hücrede duyarlıdır.
+\hesapla{kalan türbin ve ufuklar için $\lambda$}
+
+\subsection{Nedensel protokolün maliyeti}
+\tasi{Taslak v2 §6.4 metni.}
+
+\begin{table}[htbp]\centering
+\caption{Tahmin anı gecikmesi, Türbin 57, tek çekirdek; kayan VMD için seri
+boyunca 200 konumun ortancası.}
+\footnotesize
+\begin{tabular}{lrr}
+\toprule
+Yöntem & Tek tahmin anı & Test kümesi (5.252 nokta) \\
+\midrule
+Kayan VMD ($W=672$)        & 89,9 ms & $\approx$ 8 dk \\
+LCSF (çevrimiçi güncelleme) & 69 µs  & 0,36 sn \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Nedensel doğruluk 1 ve 6 saatte istatistiksel olarak ayırt edilemiyor, 3 saatte
+küçük ama anlamlı bir LCSF üstünlüğü var. Oran uygulamaya ve donanıma bağlıdır;
+sonuç büyüklük mertebesidir ($10^3$). Çiftlik ölçeğinde sonucu doğrudandır: kayan
+VMD tüm seri için türbin başına saat mertebesinde süre ister; 134 türbin için bu,
+tahmin anı başına yeniden ayrıştırmayı uygulanamaz kılar. Kilitli banka bunu
+saniyeye indirir.
+
+\subsection{Nedensel modellerin referans modellere karşı durumu}
+\tasi{Taslak v2 §6.15 metni; Nielsen referansının MAE'de daha zayıf referans
+olduğu ve ona göre pozitif skill'in persistence'a göre olandan güçlü
+okunmaması gerektiği çekincesiyle.}
+
+\begin{table}[htbp]\centering
+\caption{Bir saatlik ufuk, altı türbin: referans hataları (kW) ve nedensel
+modellerin Nielsen referansına (Denk.~\eqref{eq:nielsen}) göre MAE skill'i (\%).}
+\scriptsize
+\begin{tabular}{lrrrrrrl}
+\toprule
+Türbin & $a_k$ & MAE pers. & MAE Nielsen & MAE clim. & RMSE pers. &
+RMSE Nielsen & Nielsen'e göre Skill: LSTM / VMD / LCSF / CatBoost \\
+\midrule
+T57  & 0,837 & 108,41 & 125,67 & 338,07 & 190,21 & 186,37 & 8,8 / 7,6 / 7,5 / 15,6 \\
+T10  & 0,847 & 110,58 & 135,29 & 405,95 & 199,52 & 198,35 & 2,6 / 5,3 / 5,6 / 13,7 \\
+T83  & 0,837 &  95,85 & 122,54 & 371,01 & 181,64 & 182,63 & 6,6 / 8,9 / 9,1 / 19,3 \\
+T120 & 0,819 &  95,08 & 112,11 & 292,29 & 169,21 & 165,78 & 13,2 / 14,7 / 13,6 / 16,7 \\
+T61  & 0,826 & 107,31 & 127,02 & 335,40 & 190,36 & 186,82 & 7,3 / 5,9 / 6,1 / 15,7 \\
+T84  & 0,833 & 103,19 & 119,89 & 322,52 & 180,62 & 177,20 & 9,0 / 3,0 / 8,1 / 14,6 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Eğitim kaybına duyarlılık}
+\tasi{Taslak v2 §6.16 metni.}
+
+\begin{table}[htbp]\centering
+\caption{Türbin 57, 1 sa, mutlak hata kaybıyla eğitilmiş LSTM, üç tohum
+(42--44). Persistence MAE'si 108,41 kW.}
+\footnotesize
+\begin{tabular}{llrr}
+\toprule
+Model & Protokol & MAE (kW) & Persistence'a göre MAE skill (\%) \\
+\midrule
+Ham LSTM              & nedensel             & $106,65\pm0,33$ & 1,6 \\
+Kayan VMD--LSTM       & nedensel             & $107,22\pm0,31$ & 1,1 \\
+LCSF--LSTM            & nedensel (tek yönlü) & $107,19\pm0,76$ & 1,1 \\
+Tam seri VMD--LSTM    & sızdıran             & $61,61\pm3,10$  & --- \\
+LCSF--LSTM            & sızdıran (iki yönlü) & $56,86\pm3,49$  & --- \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Eşleştirilmiş kayıpla nedensel modeller 106,65--107,22 kW'a ulaşıyor ve
+persistence'ı \%1,1--1,6 geçiyor; sızıntıyla ilişkili fark değişmiyor
+(LSI-VMD $42,5\pm2,7$\%, LSI-LCSF $46,9\pm3,4$\%). İki sonuç çıkıyor: ana bulgu
+kare hata kaybının yapaylığı değildir, buna karşılık nedensel modellerin MAE'de
+persistence karşısındaki konumu kaybın yapaylığıdır. Ayrıştırma kazancının
+yokluğu mutlak hata kaybında da geçerli --- üç nedensel model birbirinden
+yaklaşık 0,6 kW içinde kalıyor.
+
+\subsection{Sağlamlık}
+\tasi{Taslak v2 §6.3, §6.7--6.9, §6.12--6.13 ve §7.1'deki eşit eğitim penceresi
+kontrolü; ayrıntı Ek B'de.}
+
+% =====================================================================
+\section{Tartışma}
+% =====================================================================
+\tasi{Taslak v2 §7, ham fark yerine maliyet ekseni etrafında yeniden
+yazılacak.}
+
+\subsection{Sınırlılıklar}
+\tasi{Taslak v2 §7.1 neredeyse olduğu gibi. Eklenecek: sertifika denenen küme
+üzerinde gerekli bir koşuldur; $\lambda$ oracle tanımına bağlıdır ve VMD
+oracle'ı zayıftır; literatür taraması özet düzeydedir.}
+
+% =====================================================================
+\section{Sonuç}
+% =====================================================================
+\tasi{Taslak v2 §8, üç araç ve maliyet sonucu etrafında yeniden yazılacak.}
+
+% =====================================================================
+\section*{Beyanlar}
+\tasi{Taslak v2. CRediT, çıkar çatışması, üretken yapay zekâ beyanı ve veri
+erişilebilirliği. Yazar sırası tutarsızlığı çözülecek.}
+
+\textbf{Veri erişilebilirliği --- gönderimden önce:} depo şu an özeldir ve
+makaledeki adres okur için çözülmemektedir; herkese açık yapılmalı, kayıtlı
+sonuç tabloları eklenmeli (depo şu an yalnız kod taşıyor) ve kalıcı bir Zenodo
+DOI'si oluşturulup burada atıf verilmelidir.
+
+% =====================================================================
+\section*{Kaynakça}
+\textsf{Kaynakça tek listeden, İngilizce sürümde yönetilmektedir
+(\texttt{manuscript/en/RE\_manuscript\_v2.tex}). Yalnızca hakemli kaynaklar ana
+listeye girer; preprint'ler işaretlidir.}
+
+\end{document}
