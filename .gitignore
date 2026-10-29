@@ -6,6 +6,3 @@ __pycache__/
 
 !sonuclar_v2/*.csv
 !scripts_v2/*.csv
-
-!sonuclar_v2/*.csv
-!scripts_v2/*.csv

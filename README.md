@@ -1,3 +1,4 @@
+> **v2 (manuscript submitted to Renewable Energy):** new experiments, result tables and the second wind farm (Kelmarsh) are described in [README_v2.md](README_v2.md); that file starts with an English summary.
 > **v2 (Renewable Energy gönderimi):** yeni deneyler, sonuç tabloları ve ikinci çiftlik (Kelmarsh) için bkz. [README_v2.md](README_v2.md).
 
 # Rüzgâr gücü tahmininde zamansal sızıntının ölçülmesi — kod paketi
@@ -121,7 +122,7 @@ Paket, makale sonuçlarını üreten Colab defterlerinden (`notebooks/orijinal_d
 
 ## Lisans / atıf
 
-Kod MIT lisansı altındadır (`LICENSE`). Atıf için `CITATION.cff` dosyasına bakınız; Zenodo DOI makale yayımlandığında eklenecektir.
+Kod MIT lisansı altındadır (`LICENSE`). Atıf için `CITATION.cff` dosyasına bakınız; Zenodo DOI is added to the manuscript and to this file when the archived release is created / Zenodo DOI, arşivlenmiş sürüm oluşturulduğunda makaleye ve bu dosyaya eklenir.
 
 
 ## Nisan 2020 boşluğu duyarlılık sonucu
