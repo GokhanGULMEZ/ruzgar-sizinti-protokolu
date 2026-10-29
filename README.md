@@ -1,4 +1,10 @@
 > **v2 (manuscript submitted to Renewable Energy):** new experiments, result tables and the second wind farm (Kelmarsh) are described in [README_v2.md](README_v2.md); that file starts with an English summary.
+
+> **Repository map / Klasör haritası**
+> - Core code and first-paper steps: `leakage/` (library), `scripts/` (steps 00–32), `tests/`, `notebooks/`
+> - v2 additions: `ek/` (analyses that read stored results, no training), `scripts_v2/` (new experiments), `sonuclar_v2/` (result tables, CSV), `sekiller_v2/` (extra figures); details in `README_v2.md`
+> - How to cite: `CITATION.cff`
+
 > **v2 (Renewable Energy gönderimi):** yeni deneyler, sonuç tabloları ve ikinci çiftlik (Kelmarsh) için bkz. [README_v2.md](README_v2.md).
 
 # Rüzgâr gücü tahmininde zamansal sızıntının ölçülmesi — kod paketi
