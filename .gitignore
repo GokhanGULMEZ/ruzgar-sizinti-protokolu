@@ -3,3 +3,9 @@ __pycache__/
 *.npy
 *.csv
 .ipynb_checkpoints/
+
+!sonuclar_v2/*.csv
+!scripts_v2/*.csv
+
+!sonuclar_v2/*.csv
+!scripts_v2/*.csv

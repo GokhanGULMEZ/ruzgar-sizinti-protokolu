@@ -1,3 +1,5 @@
+> **v2 (Renewable Energy gönderimi):** yeni deneyler, sonuç tabloları ve ikinci çiftlik (Kelmarsh) için bkz. [README_v2.md](README_v2.md).
+
 # Rüzgâr gücü tahmininde zamansal sızıntının ölçülmesi — kod paketi
 
 Makale: *Ayrıştırma tabanlı rüzgâr gücü tahmininde zamansal (ileri-bakış) sızıntının nicelleştirilmesi*
