@@ -2,7 +2,8 @@
 Soru: LCSF'nin VMD'den ogrenilen bant kenarlari gerekli mi, yoksa herhangi bir nedensel filtre bankasi ayni dogrulugu verir mi?
 Kollar (hepsi nedensel, ayni 37 oznitelik, ayni egitim kumesi skip=W-1, ayni LSTM ve tohumlar 42,43,44):
   lcsf_kontrol : LCSF (dogrulama; T57 icin beklenen 115.94 kW, 3 tohum ortalamasi)
-  log_butter   : sabit logaritmik aralikli Butterworth bankasi, kenarlar 0.0039, 0.0156, 0.0625 cycle/adim (VMD kullanilmaz)
+  log_butter   : sabit logaritmik aralikli Butterworth bankasi (VMD kullanilmaz). DIKKAT: butter() fs verilmeden cagrildi, bu yuzden
+               0.0039, 0.0156, 0.0625 Nyquist'e gore oranlardir; gercek kenarlar 0.00195, 0.0078, 0.03125 cycle/adim (periyot 512, 128, 32 adim)
   ema_fark     : uc ussel ortalama (0.5, 0.1, 0.02) ve fark bankasi; bilesenler e3, e2-e3, e1-e2, x-e1
 Karsilastirma icin Drive'daki onceki tahminlerden: ham LSTM (B2), rolling VMD (B7), LCSF (B8), 3 tohum ortalamasi.
 Ortam: RT_PKG, RT_OUT, RT_EK_OUT. Ayar: ALT_TURB="57,10,83,120,61,84". Cikti: deney4_ucuz_bankalar.csv (her turbin bitince yazilir)."""
@@ -20,7 +21,7 @@ from leakage.evaluation import mae
 EK = os.environ.get('RT_EK_OUT', '/content/drive/MyDrive/RuzgarTahmin/ek_cikti/'); os.makedirs(EK, exist_ok=True)
 H = 2; SEEDS = (42, 43, 44)
 TURB = [int(x) for x in os.environ.get('ALT_TURB', '57,10,83,120,61,84').split(',') if x]
-LOG_EDGES = [0.0039, 0.0156, 0.0625]
+LOG_EDGES = [0.0039, 0.0156, 0.0625]   # Nyquist'e gore oran (fs verilmedi): gercek 0.00195, 0.0078, 0.03125 cycle/adim
 
 
 def bank_log(x):
