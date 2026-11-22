@@ -12,6 +12,7 @@ depoya eklenmez; Zenodo kaydına konur.
 | `ek04_zaman_bilesen.csv`, `ek04_tahmin.csv` | `scripts_v2/ek04_stvmd_kiyas.py` | Maliyet bölümü, Tablo E.5 |
 | `ek05_rolling_origin.csv` | `scripts_v2/ek05_rolling_origin.py` | Dayanıklılık, Tablo E.6 |
 | `ek08_esdegerlik.csv` | `ek/08_esdegerlik/ek08_esdegerlik.py` | Bölüm 5.5 (LCSF ve rolling VMD farkı, eşdeğerlik) |
-| `ek07_kelmarsh.csv` | `scripts_v2/ek07_kelmarsh.py` | Ek F, Tablo F.1 |
+| `ek07_kelmarsh.csv` | `scripts_v2/ek07_kelmarsh.py` | Ek S6, Tablo S6.1 |
+| `placebo_lcsf_m2_T57.csv`, `placebo_ozet_lcsf_m2_T57.csv`, `placebo_vmd_m2_T57.csv`, `placebo_ozet_vmd_m2_T57.csv` | `scripts_v2/deney5_placebo_gelecek.py` | Tablo S5.12 (placebo-gelecek kontrolü) |
 
 Drive'daki yer: `MyDrive/RuzgarTahmin/ek_cikti/`.

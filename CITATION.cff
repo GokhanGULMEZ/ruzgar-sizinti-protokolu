@@ -1,8 +1,8 @@
 cff-version: 1.2.0
 message: "If you use this software or its results, please cite the associated article and this repository."
 title: "Code and result tables for: Making leakage-free wind power forecasting affordable: a low-latency causal filter bank and a training-free causality probe"
-version: "2.0"
-date-released: "2026-10-29"
+version: "2.1"
+date-released: "2026-11-22"
 authors:
   - family-names: "Gülmez"
     given-names: "Gökhan"
